@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+}
+
+body {
+  background: linear-gradient(135deg, #0a1019 0%, #11232e 60%, #1a3a2c 100%);
+  color: #e5e7eb;
+}
+
+.bg-primary {
+  background-color: #22c55e !important;
+}
+.text-primary {
+  color: #22c55e !important;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+}
+.pulse-online { animation: pulse-green 2s infinite; }
