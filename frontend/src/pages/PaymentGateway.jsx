@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { QRCodeSVG } from 'qrcode.react';
 
+
 const PAYMENT_DETAILS = {
   name: 'HIMANSHU SINGH',
-  account: '9014030768',
+  account: '7836887228',
   ifsc: 'KKBK0005033',
   bank: 'KOTAK BANK',
-  upi: '9014030768@kotak',
+  upi: '7836887228@okaxis',
 };
-
 const upiUrl = `upi://pay?pa=${PAYMENT_DETAILS.upi}&pn=${encodeURIComponent(PAYMENT_DETAILS.name)}&cu=INR`;
 
 const PaymentGateway = () => {
@@ -64,64 +64,86 @@ const PaymentGateway = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1019] flex flex-col items-center justify-center py-8 px-2 sm:px-8">
-      <div className="bg-[#111827] rounded-2xl shadow-xl border border-[#19e68c] p-6 w-full max-w-md flex flex-col items-center">
-        <h1 className="text-2xl font-bold text-white mb-4 text-center">Payment Gateway</h1>
-        <div className="mb-4 flex flex-col gap-1 w-full">
-          <span className="text-[#19e68c] font-semibold">Account Name:</span>
-          <span className="text-white">{PAYMENT_DETAILS.name}</span>
-          <span className="text-[#19e68c] font-semibold mt-2">Account No:</span>
-          <span className="text-white">{PAYMENT_DETAILS.account}</span>
-          <span className="text-[#19e68c] font-semibold mt-2">IFSC:</span>
-          <span className="text-white">{PAYMENT_DETAILS.ifsc}</span>
-          <span className="text-[#19e68c] font-semibold mt-2">Bank:</span>
-          <span className="text-white">{PAYMENT_DETAILS.bank}</span>
-          <span className="text-[#19e68c] font-semibold mt-2">UPI ID:</span>
-          <span className="text-white flex items-center gap-2">
-            {PAYMENT_DETAILS.upi}
-            <button
-              className="ml-2 px-2 py-1 bg-[#19e68c] text-black rounded text-xs font-semibold hover:bg-[#16a34a] transition"
-              onClick={() => handleCopy(PAYMENT_DETAILS.upi)}
-            >
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
-          </span>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1019] via-[#0f172a] to-[#1e293b] flex flex-col items-center py-8 px-2">
+      {/* Hero Section */}
+      <div className="w-full max-w-2xl mx-auto flex flex-col items-center mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" rx="8" fill="#19e68c" opacity="0.15"/><rect x="8" y="12" width="16" height="8" rx="4" fill="#19e68c"/></svg>
+          <span className="text-3xl md:text-4xl font-extrabold text-white"><span className="text-[#19e68c]">DriveEase</span> Payment</span>
         </div>
-        <div className="my-6 flex flex-col items-center">
-          <span className="text-[#19e68c] font-semibold mb-2">Scan to Pay (UPI QR)</span>
-          <QRCodeSVG value={upiUrl} size={160} bgColor="#111827" fgColor="#19e68c" includeMargin={true} />
+        <div className="text-[#a7f3d0] text-lg mb-6 text-center">Secure & fast payment for your ride</div>
+      </div>
+      {/* Amount Card */}
+      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#19e68c] shadow-xl p-8 flex flex-col items-center mb-8">
+        <div className="text-[#a7f3d0] font-semibold mb-2 tracking-wide">AMOUNT TO PAY</div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[#19e68c] text-3xl font-extrabold">₹</span>
+          <span className="text-3xl font-extrabold text-white">0</span>
         </div>
-        <a
-          href={upiUrl}
-          className="w-full mt-4 bg-[#19e68c] text-black py-3 rounded-xl font-bold text-base shadow hover:bg-[#16a34a] transition-all text-center"
-        >
-          Pay via UPI App
-        </a>
-        {/* Upload Screenshot */}
-        <form onSubmit={handleUpload} className="w-full mt-6 flex flex-col gap-2 items-center">
-          <label className="text-[#19e68c] font-semibold">Upload Payment Screenshot</label>
-          <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} className="text-white" />
-          <button type="submit" className="bg-[#19e68c] text-black py-2 px-4 rounded font-bold mt-2" disabled={uploading}>{uploading ? 'Uploading...' : 'Upload'}</button>
-          {success && <div className={`mt-2 text-sm ${success.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}>{success}</div>}
-        </form>
-        {/* Payment History */}
-        <div className="w-full mt-8">
-          <h2 className="text-lg font-bold text-white mb-2">Payment History</h2>
-          {loading ? (
-            <div className="text-[#19e68c]">Loading...</div>
-          ) : history.length === 0 ? (
-            <div className="text-gray-400">No payments yet.</div>
-          ) : (
-            <ul className="divide-y divide-[#222c37]">
-              {history.map((p) => (
-                <li key={p._id} className="py-2 flex flex-col">
-                  <span className="text-white font-semibold">₹{p.amount}</span>
-                  <span className="text-xs text-[#19e68c]">{new Date(p.date).toLocaleString()}</span>
-                  <span className="text-xs text-gray-400">{p.status}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+        <input type="text" className="w-full mt-2 px-4 py-2 rounded-lg bg-[#181f2a] border border-[#232c3a] text-white text-center font-semibold focus:outline-none focus:border-[#19e68c]" placeholder="Enter Booking ID / Reference" />
+      </div>
+      {/* Payment Methods */}
+      <div className="w-full max-w-xl mx-auto flex flex-row gap-4 mb-8">
+        <div className="flex-1 bg-[#101624] rounded-2xl border-2 border-[#19e68c] p-4 flex flex-col items-center relative">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#19e68c] text-[#0a1019] text-xs font-bold px-3 py-1 rounded-full shadow tracking-wide border-2 border-white/20">Recommended</div>
+          <svg width="28" height="28" fill="none" viewBox="0 0 28 28" className="mb-2"><rect x="4" y="8" width="20" height="12" rx="6" fill="#19e68c" opacity="0.15"/><rect x="8" y="12" width="12" height="4" rx="2" fill="#19e68c"/></svg>
+          <div className="font-bold text-white">UPI</div>
+        </div>
+        <div className="flex-1 bg-[#101624] rounded-2xl border-2 border-[#232c3a] p-4 flex flex-col items-center relative">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#19e68c] text-[#0a1019] text-xs font-bold px-3 py-1 rounded-full shadow tracking-wide border-2 border-white/20">Fastest</div>
+          <svg width="28" height="28" fill="none" viewBox="0 0 28 28"><rect x="4" y="4" width="20" height="20" rx="10" fill="#a7f3d0" opacity="0.15"/><rect x="8" y="8" width="12" height="12" rx="6" fill="#a7f3d0"/></svg>
+          <div className="font-bold text-white">Scan QR</div>
+        </div>
+        <div className="flex-1 bg-[#101624] rounded-2xl border-2 border-[#232c3a] p-4 flex flex-col items-center">
+          <svg width="28" height="28" fill="none" viewBox="0 0 28 28"><rect x="4" y="8" width="20" height="12" rx="6" fill="#a7f3d0" opacity="0.15"/><rect x="8" y="12" width="12" height="4" rx="2" fill="#a7f3d0"/></svg>
+          <div className="font-bold text-white">Bank Transfer</div>
+        </div>
+      </div>
+      {/* UPI ID Section */}
+      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#232c3a] shadow p-6 flex flex-col items-center mb-8">
+        <div className="w-full flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+          <div>
+            <div className="text-[#a7f3d0] text-xs font-semibold">UPI ID</div>
+            <div className="text-[#19e68c] font-extrabold text-lg md:text-xl">{PAYMENT_DETAILS.upi}</div>
+          </div>
+          <button
+            className="bg-[#19e68c] text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#16a34a] transition"
+            onClick={() => handleCopy(PAYMENT_DETAILS.upi)}
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+        <div className="w-full flex flex-row gap-2 justify-center mb-2">
+          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
+            <span className="text-[#19e68c] font-bold">G</span>
+          </a>
+          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
+            <span className="text-[#a259ff] font-bold">P</span>
+          </a>
+          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
+            <span className="text-[#19e68c] font-bold">₹</span>
+          </a>
+          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
+            <span className="text-[#0a1019] font-bold">U</span>
+          </a>
+        </div>
+      </div>
+      {/* QR Code Section */}
+      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#232c3a] shadow p-6 flex flex-col items-center mb-8">
+        <span className="text-[#19e68c] font-semibold mb-2">Scan to Pay (UPI QR)</span>
+        <QRCodeSVG value={upiUrl} size={160} bgColor="#111827" fgColor="#19e68c" includeMargin={true} />
+      </div>
+      {/* Bank Details Section */}
+      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#232c3a] shadow p-6 flex flex-col items-center mb-8">
+        <div className="w-full flex flex-col gap-2">
+          <div className="text-[#a7f3d0] text-xs font-semibold">Account Name</div>
+          <div className="text-white font-bold">{PAYMENT_DETAILS.name}</div>
+          <div className="text-[#a7f3d0] text-xs font-semibold mt-2">Account Number</div>
+          <div className="text-white font-bold">{PAYMENT_DETAILS.account}</div>
+          <div className="text-[#a7f3d0] text-xs font-semibold mt-2">IFSC</div>
+          <div className="text-white font-bold">{PAYMENT_DETAILS.ifsc}</div>
+          <div className="text-[#a7f3d0] text-xs font-semibold mt-2">Bank</div>
+          <div className="text-white font-bold">{PAYMENT_DETAILS.bank}</div>
         </div>
       </div>
     </div>
