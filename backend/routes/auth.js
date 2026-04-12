@@ -46,124 +46,32 @@ router.post('/signup', async (req, res) => {
           name: driver.name,
           phone: driver.phone,
           role: 'driver',
+
           status: driver.status,
-          vehicle: driver.vehicle,
-          rating: driver.rating,
         },
       });
-    }
+    } else {
+      // User signup
+      const exists = await User.findOne({ phone });
+      if (exists) return res.status(400).json({ message: 'Phone already registered as user' });
 
-    // User signup
-    const exists = await User.findOne({ phone });
-    if (exists) return res.status(400).json({ message: 'Phone already registered' });
-
-    const user = await User.create({ name, phone, password, role: 'user' });
-    const token = signToken(user._id, 'user');
-
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        role: 'user',
-      },
-    });
-  } catch (err) {
-    console.error('Signup error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
-  try {
-    const { phone, password, role } = req.body;
-
-    if (!phone || !password) {
-      return res.status(400).json({ message: 'Phone and password are required' });
-    }
-
-    const selectedRole = role === 'driver' ? 'driver' : 'user';
-
-    if (selectedRole === 'driver') {
-      const driver = await Driver.findOne({ phone }).select('+password');
-      if (!driver) return res.status(400).json({ message: 'Invalid credentials' });
-
-      const isMatch = await driver.comparePassword(password);
-      if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-
-      const token = signToken(driver._id, 'driver');
-      return res.json({
+      const user = await User.create({ name, phone, password });
+      const token = signToken(user._id, 'user');
+      return res.status(201).json({
         token,
         user: {
-          id: driver._id,
-          name: driver.name,
-          phone: driver.phone,
-          role: 'driver',
-          status: driver.status,
-          vehicle: driver.vehicle,
-          rating: driver.rating,
-          earnings: driver.earnings,
-          totalRides: driver.totalRides,
+          id: user._id,
+          name: user.name,
+          phone: user.phone,
+          role: 'user',
         },
       });
     }
-
-    // User login
-    const user = await User.findOne({ phone }).select('+password');
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
-
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-
-    const token = signToken(user._id, 'user');
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        role: 'user',
-      },
-    });
   } catch (err) {
-    console.error('Login error:', err);
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// GET /api/auth/me
-router.get('/me', auth, async (req, res) => {
-  try {
-    if (req.user.role === 'driver') {
-      const driver = await Driver.findById(req.user.id);
-      if (!driver) return res.status(404).json({ message: 'Driver not found' });
-      return res.json({
-        id: driver._id,
-        name: driver.name,
-        phone: driver.phone,
-        role: 'driver',
-        status: driver.status,
-        vehicle: driver.vehicle,
-        rating: driver.rating,
-        earnings: driver.earnings,
-        totalRides: driver.totalRides,
-        location: driver.location,
-      });
-    }
-
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({
-      id: user._id,
-      name: user.name,
-      phone: user.phone,
-      role: 'user',
-    });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
+// Export router
 module.exports = router;

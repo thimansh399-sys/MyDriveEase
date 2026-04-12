@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
-import MapView, { pickupIcon, dropIcon } from '../components/MapView';
+import MapView from '../components/MapView';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getUserLocation, calculateDistance, formatCurrency } from '../utils/helpers';
 
@@ -144,10 +144,10 @@ function BookRide() {
 
   const markers = [];
   if (pickup.lat && pickup.lng) {
-    markers.push({ lat: pickup.lat, lng: pickup.lng, icon: pickupIcon, popup: 'Pickup' });
+    markers.push({ lat: pickup.lat, lng: pickup.lng, popup: 'Pickup' });
   }
   if (drop.lat && drop.lng) {
-    markers.push({ lat: drop.lat, lng: drop.lng, icon: dropIcon, popup: 'Drop-off' });
+    markers.push({ lat: drop.lat, lng: drop.lng, popup: 'Drop-off' });
   }
 
   const fitBounds = markers.length === 2
