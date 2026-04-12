@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
 import { getSocket } from '../utils/socket';
-import MapView, { pickupIcon, dropIcon, driverIcon } from '../components/MapView';
+import MapView from '../components/MapView';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/helpers';
 
@@ -94,7 +94,6 @@ const TrackRide = () => {
     markers.push({
       lat: booking.pickup.coordinates[1],
       lng: booking.pickup.coordinates[0],
-      icon: pickupIcon,
       popup: `Pickup: ${booking.pickup.address}`,
     });
   }
@@ -102,7 +101,6 @@ const TrackRide = () => {
     markers.push({
       lat: booking.drop.coordinates[1],
       lng: booking.drop.coordinates[0],
-      icon: dropIcon,
       popup: `Drop: ${booking.drop.address}`,
     });
   }
@@ -110,7 +108,6 @@ const TrackRide = () => {
     markers.push({
       lat: driverLocation.lat,
       lng: driverLocation.lng,
-      icon: driverIcon,
       popup: 'Driver',
     });
   }
