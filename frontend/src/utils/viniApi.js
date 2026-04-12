@@ -2,7 +2,8 @@
 // This example expects a backend endpoint at /api/vini-chat
 
 export async function askVini(message) {
-  const res = await fetch('/api/vini-chat', {
+  const base = import.meta.env.VITE_API_URL || '';
+  const res = await fetch(`${base}/api/vini-chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
