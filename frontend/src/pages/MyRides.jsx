@@ -109,6 +109,7 @@ const MyRides = () => {
                     <div className="space-y-1 text-sm">
                       <p className="text-gray-300">📍 {ride.pickup?.address}</p>
                       <p className="text-gray-300">🏁 {ride.drop?.address}</p>
+                      <p className="text-gray-400 text-xs">Booking ID: {ride._id}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -124,13 +125,18 @@ const MyRides = () => {
                     <span>• ⭐ {ride.driverId.rating?.toFixed(1)}</span>
                   </div>
                 )}
+                {!ride.driverId && (
+                  <div className="pt-3 border-t border-[#122c3f] text-sm text-gray-400">
+                    Driver not assigned yet. You can still view full ride details.
+                  </div>
+                )}
 
                 <div className="flex gap-2 mt-3">
                   <Link
                     to={`/track/${ride._id}`}
-                    className="text-xs bg-green-500 text-black px-4 py-2 rounded-lg font-medium animate-pulse"
+                    className="text-xs bg-green-500 text-black px-4 py-2 rounded-lg font-medium"
                   >
-                    Track & Invoice
+                    View Full Details
                   </Link>
                   {ride.status === 'completed' && !ride.rating && (
                     <Link

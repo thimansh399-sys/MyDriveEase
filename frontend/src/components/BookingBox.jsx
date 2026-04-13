@@ -1,24 +1,165 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import api from '../utils/api';
+import { INDIA_CENTER, resolveIndiaLocation, searchIndiaLocations } from '../utils/places';
 
-export default function BookingBox() {
+export default function BookingBox({ onLocationsChange }) {
   const [pickup, setPickup] = useState("");
   const [drop, setDrop] = useState("");
+  const [pickupLocation, setPickupLocation] = useState(null);
+  const [dropLocation, setDropLocation] = useState(null);
   const [rideType, setRideType] = useState("oneway");
   const [hours, setHours] = useState(2);
   const [loading, setLoading] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
+  const [suggestions, setSuggestions] = useState({ pickup: [], drop: [] });
+  const [loadingField, setLoadingField] = useState('');
+  const [activeField, setActiveField] = useState('');
+  const requestIds = useRef({ pickup: 0, drop: 0 });
+
+  useEffect(() => {
+    if (!onLocationsChange) {
+      return;
+    }
+
+    onLocationsChange({
+      pickup: pickupLocation,
+      drop: rideType === 'hourly' ? null : dropLocation,
+    });
+  }, [dropLocation, onLocationsChange, pickupLocation, rideType]);
+
+  useEffect(() => {
+    if (rideType === 'hourly') {
+      setDrop('');
+      setDropLocation(null);
+      setSuggestions((current) => ({ ...current, drop: [] }));
+    }
+  }, [rideType]);
+
+  useEffect(() => {
+    const query = pickup.trim();
+    if (query.length < 3) {
+      setSuggestions((current) => ({ ...current, pickup: [] }));
+      return;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      const requestId = requestIds.current.pickup + 1;
+      requestIds.current.pickup = requestId;
+      setLoadingField('pickup');
+
+      try {
+        const results = await searchIndiaLocations(query);
+        if (requestIds.current.pickup === requestId) {
+          setSuggestions((current) => ({ ...current, pickup: results }));
+        }
+      } catch {
+        if (requestIds.current.pickup === requestId) {
+          setSuggestions((current) => ({ ...current, pickup: [] }));
+        }
+      } finally {
+        if (requestIds.current.pickup === requestId) {
+          setLoadingField((current) => (current === 'pickup' ? '' : current));
+        }
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pickup]);
+
+  useEffect(() => {
+    const query = drop.trim();
+    if (rideType === 'hourly' || query.length < 3) {
+      setSuggestions((current) => ({ ...current, drop: [] }));
+      return;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      const requestId = requestIds.current.drop + 1;
+      requestIds.current.drop = requestId;
+      setLoadingField('drop');
+
+      try {
+        const results = await searchIndiaLocations(query);
+        if (requestIds.current.drop === requestId) {
+          setSuggestions((current) => ({ ...current, drop: results }));
+        }
+      } catch {
+        if (requestIds.current.drop === requestId) {
+          setSuggestions((current) => ({ ...current, drop: [] }));
+        }
+      } finally {
+        if (requestIds.current.drop === requestId) {
+          setLoadingField((current) => (current === 'drop' ? '' : current));
+        }
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [drop, rideType]);
+
+  const handleFieldChange = (field, value) => {
+    setActiveField(field);
+
+    if (field === 'pickup') {
+      setPickup(value);
+      setPickupLocation((current) => (current?.address === value ? current : null));
+      return;
+    }
+
+    setDrop(value);
+    setDropLocation((current) => (current?.address === value ? current : null));
+  };
+
+  const handleLocationSelect = (field, location) => {
+    if (field === 'pickup') {
+      setPickup(location.address);
+      setPickupLocation(location);
+      setSuggestions((current) => ({ ...current, pickup: [] }));
+    } else {
+      setDrop(location.address);
+      setDropLocation(location);
+      setSuggestions((current) => ({ ...current, drop: [] }));
+    }
+
+    setActiveField('');
+  };
 
   const handleSearch = async () => {
-    if (!pickup) return alert("Enter pickup location");
-    if ((rideType === "oneway" || rideType === "outstation") && !drop) {
+    if (!pickup.trim()) return alert("Enter pickup location");
+    if ((rideType === "oneway" || rideType === "outstation") && !drop.trim()) {
       return alert("Enter destination");
     }
+
     setLoading(true);
     try {
-      // Dummy coordinates for now (should use geocoding in real app)
-      const pickupObj = { address: pickup, coordinates: [0, 0] };
-      const dropObj = drop ? { address: drop, coordinates: [0, 0] } : null;
+      const resolvedPickup = pickupLocation || (await resolveIndiaLocation(pickup.trim())) || INDIA_CENTER;
+      const resolvedDrop =
+        rideType === 'hourly'
+          ? null
+          : dropLocation || (await resolveIndiaLocation(drop.trim()));
+
+      if ((rideType === 'oneway' || rideType === 'outstation') && !resolvedDrop) {
+        alert('Select a destination from the India suggestions.');
+        setLoading(false);
+        return;
+      }
+
+      const pickupObj = {
+        address: resolvedPickup.address,
+        coordinates: [resolvedPickup.lng, resolvedPickup.lat],
+      };
+      const dropObj = resolvedDrop
+        ? {
+            address: resolvedDrop.address,
+            coordinates: [resolvedDrop.lng, resolvedDrop.lat],
+          }
+        : null;
+
+      setPickupLocation(resolvedPickup);
+      if (resolvedDrop) {
+        setDropLocation(resolvedDrop);
+      }
+
       let distance = 10;
       let duration = 30;
       let fare = 50;
@@ -31,6 +172,7 @@ export default function BookingBox() {
         duration = 180;
         fare = 500;
       }
+
       const res = await api.post('/bookings/create', {
         pickup: pickupObj,
         drop: dropObj,
@@ -40,10 +182,11 @@ export default function BookingBox() {
         fare,
       });
       setConfirmation(res.data);
-    } catch (err) {
+    } catch {
       alert('Booking failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -121,21 +264,68 @@ export default function BookingBox() {
           Outstation
         </button>
       </div>
-      {/* 📍 PICKUP */}
-      <input
-        value={pickup}
-        onChange={(e) => setPickup(e.target.value)}
-        placeholder="Pickup Location"
-        className="w-full p-3 mb-3 rounded-xl bg-white dark:bg-[#122c3f] text-black dark:text-white border border-border focus:ring-2 focus:ring-primary outline-none"
-      />
+      <div className="relative mb-3">
+        <input
+          value={pickup}
+          onChange={(e) => handleFieldChange('pickup', e.target.value)}
+          onFocus={() => setActiveField('pickup')}
+          onBlur={() => window.setTimeout(() => setActiveField((current) => (current === 'pickup' ? '' : current)), 150)}
+          placeholder="Pickup location, area, city or state in India"
+          className="w-full p-3 rounded-xl bg-white dark:bg-[#122c3f] text-black dark:text-white border border-border focus:ring-2 focus:ring-primary outline-none"
+        />
+        {loadingField === 'pickup' && (
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-300">Searching India locations...</div>
+        )}
+        {activeField === 'pickup' && suggestions.pickup.length > 0 && (
+          <div className="absolute left-0 right-0 top-full mt-2 z-20 rounded-xl border border-border bg-white dark:bg-[#122c3f] shadow-xl max-h-56 overflow-y-auto">
+            {suggestions.pickup.map((location) => (
+              <button
+                key={`${location.address}-${location.lat}-${location.lng}`}
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  handleLocationSelect('pickup', location);
+                }}
+                className="w-full text-left px-3 py-3 text-sm text-black dark:text-white hover:bg-primary/10 border-b border-black/5 dark:border-white/5 last:border-b-0"
+              >
+                {location.address}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       {/* 🏁 DROP (only for one-way & outstation) */}
       {(rideType === "oneway" || rideType === "outstation") && (
-        <input
-          value={drop}
-          onChange={(e) => setDrop(e.target.value)}
-          placeholder="Destination"
-          className="w-full p-3 mb-3 rounded-xl bg-white dark:bg-[#122c3f] text-black dark:text-white border border-border focus:ring-2 focus:ring-primary outline-none"
-        />
+        <div className="relative mb-3">
+          <input
+            value={drop}
+            onChange={(e) => handleFieldChange('drop', e.target.value)}
+            onFocus={() => setActiveField('drop')}
+            onBlur={() => window.setTimeout(() => setActiveField((current) => (current === 'drop' ? '' : current)), 150)}
+            placeholder="Destination area, city or state in India"
+            className="w-full p-3 rounded-xl bg-white dark:bg-[#122c3f] text-black dark:text-white border border-border focus:ring-2 focus:ring-primary outline-none"
+          />
+          {loadingField === 'drop' && (
+            <div className="mt-2 text-xs text-gray-500 dark:text-gray-300">Searching India locations...</div>
+          )}
+          {activeField === 'drop' && suggestions.drop.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-2 z-20 rounded-xl border border-border bg-white dark:bg-[#122c3f] shadow-xl max-h-56 overflow-y-auto">
+              {suggestions.drop.map((location) => (
+                <button
+                  key={`${location.address}-${location.lat}-${location.lng}`}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    handleLocationSelect('drop', location);
+                  }}
+                  className="w-full text-left px-3 py-3 text-sm text-black dark:text-white hover:bg-primary/10 border-b border-black/5 dark:border-white/5 last:border-b-0"
+                >
+                  {location.address}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
       {/* ⏱️ HOURS (only hourly) */}
       {rideType === "hourly" && (
@@ -157,6 +347,9 @@ export default function BookingBox() {
       >
         {loading ? 'Booking...' : 'Book Ride'}
       </button>
+      <p className="mt-3 text-xs text-gray-600 dark:text-gray-300">
+        Type any India area, city or state such as Kanpur Nagar, Noida Sector 62, Indiranagar Bengaluru, or Jaipur Rajasthan.
+      </p>
     </div>
     </>
   );
