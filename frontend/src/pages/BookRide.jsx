@@ -126,24 +126,18 @@ function BookRide() {
     }
   };
 
-  const handleBooking = async () => {
-    setFindingDriver(true);
-    try {
-      const res = await api.post('/bookings/create', {
-        pickup: { address: pickup.address, coordinates: [pickup.lng, pickup.lat] },
-        drop: { address: drop.address, coordinates: [drop.lng, drop.lat] },
+  // Instead of booking here, redirect to /drivers with trip data
+  const handleFindDrivers = () => {
+    navigate('/drivers', {
+      state: {
+        pickup,
+        drop,
         distance,
         duration,
-        driverId: driverId || undefined,
-        insurancePlan: insurance,
-      });
-      setBooking(res.data);
-      setStep(3);
-    } catch (err) {
-      console.error('Booking error:', err);
-    } finally {
-      setFindingDriver(false);
-    }
+        insurance,
+        fare,
+      },
+    });
   };
 
   const markers = [];
@@ -361,11 +355,10 @@ function BookRide() {
                     </button>
                     <motion.button
                       whileTap={{ scale: 0.98 }}
-                      onClick={handleBooking}
-                      disabled={findingDriver}
-                      className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] text-white py-3 rounded-xl font-bold shadow-lg cursor-pointer disabled:opacity-50 text-lg"
+                      onClick={handleFindDrivers}
+                      className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] text-white py-3 rounded-xl font-bold shadow-lg cursor-pointer text-lg"
                     >
-                      {findingDriver ? 'Finding Driver...' : 'Confirm Booking'}
+                      Find Drivers
                     </motion.button>
                   </div>
                 </motion.div>

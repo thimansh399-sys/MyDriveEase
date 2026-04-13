@@ -16,12 +16,12 @@ const Navbar = () => {
     <motion.nav
       initial={{ y: -60 }}
       animate={{ y: 0 }}
-      className="bg-gradient-to-r from-[#0a1019] to-[#11232e] shadow-md sticky top-0 z-50"
+      className="bg-white dark:bg-gradient-to-r dark:from-[#0a1019] dark:to-[#11232e] shadow-md sticky top-0 z-50 border-b border-border"
     >
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-2xl text-primary">🚗</span>
-          <span className="text-2xl font-bold text-primary">DriveEase</span>
+          <span className="text-2xl font-extrabold text-primary tracking-tight">DriveEase</span>
         </Link>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -40,13 +40,13 @@ const Navbar = () => {
             <>
               <button
                 onClick={handleLogout}
-                className="ml-2 px-4 py-2 rounded-lg text-sm font-bold bg-transparent border border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                className="ml-2 px-4 py-2 rounded-2xl text-sm font-bold bg-transparent border border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
               >
                 Logout
               </button>
               <Link
                 to={user.role === 'driver' ? '/drivers' : '/book'}
-                className="ml-2 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-green-400 transition-colors flex items-center gap-2"
+                className="ml-2 px-4 py-2 rounded-2xl text-sm font-extrabold bg-primary text-black hover:bg-green-400 transition-colors flex items-center gap-2 shadow"
               >
                 <span role="img" aria-label="car">🚕</span> Book a Driver
               </Link>
@@ -55,13 +55,13 @@ const Navbar = () => {
             <>
               <Link
                 to="/login"
-                className="ml-2 px-4 py-2 rounded-lg text-sm font-bold bg-transparent border border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                className="ml-2 px-4 py-2 rounded-2xl text-sm font-extrabold bg-transparent border border-primary text-primary hover:bg-primary hover:text-white transition-colors"
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className="ml-2 px-4 py-2 rounded-lg text-sm font-bold bg-primary text-white hover:bg-green-400 transition-colors"
+                className="ml-2 px-4 py-2 rounded-2xl text-sm font-extrabold bg-primary text-black hover:bg-green-400 transition-colors shadow"
               >
                 Sign Up
               </Link>

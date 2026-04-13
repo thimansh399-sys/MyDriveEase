@@ -38,15 +38,11 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
+  // Signup should NOT auto-login
   const signup = async (data) => {
     const res = await api.post('/auth/signup', data);
-    const { token, user: userData } = res.data;
-
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    connectSocket(token);
-    return userData;
+    // Only return user data, do not set token/user
+    return res.data.user;
   };
 
   const logout = () => {
