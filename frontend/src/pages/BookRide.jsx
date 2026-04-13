@@ -1,35 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
-// removed duplicate import of motion
-import { CheckCircle, MapPin, Calendar, CreditCard, KeyRound } from 'lucide-react';
 import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../utils/api';
 import MapView from '../components/MapView';
-import LoadingSpinner from '../components/LoadingSpinner';
 import { getUserLocation, calculateDistance, formatCurrency } from '../utils/helpers';
 
 const BASE_FARE = 50;
 const PER_KM_RATE = 12;
-const glass = 'bg-white/80 backdrop-blur-xl shadow-2xl border border-[#e5e5e5]';
+const glass = 'bg-[#101924] border border-[#19e68c]/40 shadow-2xl';
 
 function BookRide() {
   const [searchParams] = useSearchParams();
   const driverId = searchParams.get('driverId');
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1); // 1: Enter locations, 2: Review fare, 3: Booking
+  const [step, setStep] = useState(1); // 1: Enter locations, 2: Review fare
   const [pickup, setPickup] = useState({ address: '', lat: null, lng: null });
   const [drop, setDrop] = useState({ address: '', lat: null, lng: null });
   const [distance, setDistance] = useState(0);
   const [duration, setDuration] = useState(0);
   const [insurance, setInsurance] = useState('none');
   const [fare, setFare] = useState(null);
-  const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [findingDriver, setFindingDriver] = useState(false);
   const [route, setRoute] = useState([]);
   const [userLoc, setUserLoc] = useState(null);
+  const [panelTab, setPanelTab] = useState('form');
 
   useEffect(() => {
     getUserLocation()
@@ -156,7 +151,7 @@ function BookRide() {
     : null;
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#0a1019] pb-6 sm:pb-10">
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#101924] via-[#18222f] to-[#1a3a2c] pb-6 sm:pb-10">
       <div className="max-w-5xl mx-auto p-2 sm:p-4">
         <motion.h1
           className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3"
@@ -172,7 +167,7 @@ function BookRide() {
 
         {/* Progress Steps */}
         <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-4 sm:mb-8">
-          {['Location', 'Review', 'Confirmed'].map((s, i) => (
+          {['Location', 'Review'].map((s, i) => (
             <div key={i} className="flex items-center gap-1 sm:gap-2">
               <motion.div
                 className={`w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sm sm:text-base font-bold shadow-lg border-2 ${
@@ -188,16 +183,16 @@ function BookRide() {
               >
                 {step > i + 1 ? '✓' : i + 1}
               </motion.div>
-              <span className={`text-xs sm:text-base ${step === i + 1 ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
+              <span className={`text-xs sm:text-base ${step === i + 1 ? 'text-white font-semibold' : 'text-gray-400'}`}>
                 {s}
               </span>
-              {i < 2 && <div className="w-8 sm:w-12 h-0.5 bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] mx-1 opacity-60" />}
+              {i < 1 && <div className="w-8 sm:w-12 h-0.5 bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] mx-1 opacity-60" />}
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-          {/* Map */}
+          {/* Map always visible on the left */}
           <motion.div
             className={`bg-[#111827]/90 rounded-2xl sm:rounded-3xl overflow-hidden h-[220px] sm:h-[400px] lg:h-[500px] mb-4 lg:mb-0 border border-[#19e68c]`} 
             initial={{ opacity: 0, scale: 0.98 }}
@@ -215,7 +210,7 @@ function BookRide() {
             />
           </motion.div>
 
-          {/* Right Side Panel */}
+          {/* Booking Form always visible on the right */}
           <div>
             <AnimatePresence mode="wait">
               {step === 1 && (
@@ -267,7 +262,6 @@ function BookRide() {
                   </div>
                 </motion.div>
               )}
-
               {step === 2 && fare && (
                 <motion.div
                   key="step2"
@@ -276,55 +270,55 @@ function BookRide() {
                   exit={{ opacity: 0, x: -20 }}
                   className={`${glass} rounded-3xl p-8`}
                 >
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                     <span>Trip Summary</span> <span className="text-lg">🧾</span>
                   </h2>
 
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-base">
-                      <span className="text-gray-500">📍 Pickup</span>
-                      <span className="text-gray-900 font-semibold text-right max-w-[200px] truncate">{pickup.address}</span>
+                      <span className="text-gray-300">📍 Pickup</span>
+                      <span className="text-white font-semibold text-right max-w-[200px] truncate">{pickup.address}</span>
                     </div>
                     <div className="flex justify-between text-base">
-                      <span className="text-gray-500">🏁 Drop</span>
-                      <span className="text-gray-900 font-semibold text-right max-w-[200px] truncate">{drop.address}</span>
+                      <span className="text-gray-300">🏁 Drop</span>
+                      <span className="text-white font-semibold text-right max-w-[200px] truncate">{drop.address}</span>
                     </div>
                     <div className="flex justify-between text-base">
-                      <span className="text-gray-500">📏 Distance</span>
-                      <span className="text-gray-900 font-semibold">{distance} km</span>
+                      <span className="text-gray-300">📏 Distance</span>
+                      <span className="text-white font-semibold">{distance} km</span>
                     </div>
                     <div className="flex justify-between text-base">
-                      <span className="text-gray-500">⏱️ Est. Time</span>
-                      <span className="text-gray-900 font-semibold">{duration} min</span>
+                      <span className="text-gray-300">⏱️ Est. Time</span>
+                      <span className="text-white font-semibold">{duration} min</span>
                     </div>
                   </div>
 
                   {/* Fare Breakdown */}
-                  <div className="bg-gradient-to-br from-[#e0f7fa] to-[#e8f5e9] rounded-xl p-5 mb-4 border border-[#e5e5e5]">
-                    <h3 className="text-base font-bold text-gray-900 mb-3">Fare Breakdown</h3>
+                  <div className="bg-[#0b1118] rounded-xl p-5 mb-4 border border-[#19e68c]/30">
+                    <h3 className="text-base font-bold text-[#19e68c] mb-3">Fare Breakdown (₹12/km)</h3>
                     <div className="space-y-2 text-base">
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Base Fare</span>
-                        <span>{formatCurrency(fare.baseFare)}</span>
+                        <span className="text-gray-300">Base Fare</span>
+                        <span className="text-white">{formatCurrency(fare.baseFare)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Distance ({distance} km × ₹{PER_KM_RATE})</span>
-                        <span>{formatCurrency(fare.distanceCost)}</span>
+                        <span className="text-gray-300">Distance ({distance} km × ₹{PER_KM_RATE})</span>
+                        <span className="text-white">{formatCurrency(fare.distanceCost)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Insurance</span>
-                        <span>{formatCurrency(fare.insurance)}</span>
+                        <span className="text-gray-300">Insurance</span>
+                        <span className="text-white">{formatCurrency(fare.insurance)}</span>
                       </div>
-                      <div className="border-t pt-2 flex justify-between font-bold text-gray-900">
+                      <div className="border-t border-[#19e68c]/20 pt-2 flex justify-between font-bold text-white">
                         <span>Total</span>
-                        <span className="text-lg">{formatCurrency(fare.total)}</span>
+                        <span className="text-lg text-[#19e68c]">{formatCurrency(fare.total)}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Insurance Options */}
                   <div className="mb-6">
-                    <h3 className="text-base font-bold text-gray-900 mb-3">🛡️ Insurance Add-on</h3>
+                    <h3 className="text-base font-bold text-white mb-3">🛡️ Insurance Add-on</h3>
                     <div className="grid grid-cols-3 gap-2">
                       {(
                         [
@@ -339,7 +333,7 @@ function BookRide() {
                           className={`p-3 rounded-xl text-center text-base border-2 transition-all cursor-pointer font-semibold ${
                             insurance === opt.key
                               ? 'border-[#16a34a] bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] text-white shadow-lg'
-                              : 'border-gray-200 bg-white/70 hover:border-[#16a34a] text-gray-700'
+                              : 'border-[#19e68c]/30 bg-[#0b1118] hover:border-[#16a34a] text-white'
                           }`}
                         >
                           <div>{opt.label}</div>
@@ -349,27 +343,32 @@ function BookRide() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                       onClick={() => setStep(1)}
-                      className="flex-1 py-3 border border-gray-300 rounded-xl text-base font-semibold cursor-pointer bg-white/70 hover:bg-gray-100"
+                      className="py-3 border border-[#19e68c]/40 rounded-xl text-base font-semibold cursor-pointer bg-[#0b1118] text-white hover:bg-[#13202e]"
                     >
                       Back
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!pickup.lat || !pickup.lng || !drop.lat || !drop.lng) return;
+                        const url = `https://www.google.com/maps/dir/?api=1&origin=${pickup.lat},${pickup.lng}&destination=${drop.lat},${drop.lng}&travelmode=driving`;
+                        window.open(url, '_blank');
+                      }}
+                      className="py-3 border border-[#19e68c]/40 rounded-xl text-base font-semibold cursor-pointer bg-[#0b1118] text-[#19e68c] hover:bg-[#13202e]"
+                    >
+                      Open Map Route
                     </button>
                     <motion.button
                       whileTap={{ scale: 0.98 }}
                       onClick={handleFindDrivers}
-                      className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] text-white py-3 rounded-xl font-bold shadow-lg cursor-pointer text-lg"
+                      className="bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] text-white py-3 rounded-xl font-bold shadow-lg cursor-pointer text-lg"
                     >
                       Find Drivers
                     </motion.button>
                   </div>
                 </motion.div>
-              )}
-
-
-              {step === 3 && booking && (
-                <BookingConfirmedModal booking={booking} navigate={navigate} setStep={setStep} />
               )}
             </AnimatePresence>
           </div>
@@ -380,79 +379,3 @@ function BookRide() {
 }
 
 export default BookRide;
-
-// Inline BookingConfirmedModal with updated style and black text
-function BookingConfirmedModal({ booking, navigate, setStep }) {
-  const [show, setShow] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(false);
-      navigate(`/track/${booking._id}`);
-    }, 60000); // 1 minute
-    return () => clearTimeout(timer);
-  }, [booking, navigate]);
-  if (!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white w-[380px] rounded-2xl shadow-2xl p-6"
-      >
-        {/* Header */}
-        <div className="text-center mb-4">
-          <CheckCircle className="text-green-500 mx-auto mb-2" size={40} />
-          <h2 className="text-2xl font-bold text-gray-800">Booking Confirmed</h2>
-          <p className="text-sm text-gray-500">Your ride is being arranged 🚗</p>
-        </div>
-
-        {/* Status */}
-        <div className="bg-yellow-100 text-yellow-700 text-sm font-semibold px-4 py-2 rounded-lg text-center mb-4">
-          {booking.status === 'pending' || booking.status === 'driver-assignment-pending' ? 'Driver assignment pending' : booking.status ? booking.status.replace(/-/g, ' ') : 'Status Unknown'}
-        </div>
-
-        {/* Details */}
-        <div className="space-y-3 text-sm text-gray-700 mb-4">
-          <div className="flex items-center gap-2">
-            <MapPin size={16} className="text-green-500" />
-            <span><b>Pickup:</b> {booking.pickup?.address || 'Not Available'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin size={16} className="text-red-500" />
-            <span><b>Drop:</b> {booking.drop?.address || 'Not Available'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar size={16} className="text-blue-500" />
-            <span><b>Date & Time:</b> {booking.createdAt ? new Date(booking.createdAt).toLocaleString() : 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CreditCard size={16} className="text-purple-500" />
-            <span><b>Fare:</b> ₹{booking.fare?.total ?? '0'}</span>
-          </div>
-          {booking.otp && (
-            <div className="flex items-center gap-2">
-              <KeyRound size={16} className="text-orange-500" />
-              <span><b>OTP:</b> <span className="font-mono text-lg text-black bg-yellow-100 px-3 py-1 rounded-lg tracking-widest">{booking.otp}</span></span>
-            </div>
-          )}
-        </div>
-
-        {/* Button */}
-        <button
-          className="mt-4 w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl font-semibold hover:scale-105 transition"
-          onClick={() => {
-            setShow(false);
-            navigate(`/track/${booking._id}`);
-          }}
-        >
-          🚗 Navigate with Google Maps
-        </button>
-
-        {/* Footer */}
-        <p className="text-xs text-center text-gray-400 mt-3">
-          Booking ID: {booking._id || 'XXXXXX'}
-        </p>
-      </motion.div>
-    </div>
-  );
-}

@@ -1,253 +1,98 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
-import { getSocket } from '../utils/socket';
-import MapView from '../components/MapView';
-import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/helpers';
 import { generateInvoicePDF } from '../utils/invoice';
 
 const TrackRide = () => {
   const { bookingId } = useParams();
-  const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
-  const [driverLocation, setDriverLocation] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchBooking = async () => {
+      try {
+        const res = await api.get(`/bookings/${bookingId}`);
+        setBooking(res.data);
+      } catch (err) {
+        console.error('Failed to fetch booking:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchBooking();
   }, [bookingId]);
 
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket || !bookingId) return;
-
-    socket.emit('join-booking', bookingId);
-
-    socket.on('driver-moved', (data) => {
-      if (booking?.driverId?._id === data.driverId || booking?.driverId === data.driverId) {
-        setDriverLocation({ lat: data.location.lat, lng: data.location.lng });
-      }
-    });
-
-    socket.on('booking-accepted', () => {
-      fetchBooking();
-    });
-
-    socket.on('ride-started', () => {
-      fetchBooking();
-    });
-
-    socket.on('ride-completed', () => {
-      fetchBooking();
-    });
-
-    socket.on('ride-cancelled', () => {
-      fetchBooking();
-    });
-
-    return () => {
-      socket.emit('leave-booking', bookingId);
-      socket.off('driver-moved');
-      socket.off('booking-accepted');
-      socket.off('ride-started');
-      socket.off('ride-completed');
-      socket.off('ride-cancelled');
-    };
-  }, [bookingId, booking?.driverId]);
-
-  const fetchBooking = async () => {
-    try {
-      const res = await api.get(`/bookings/${bookingId}`);
-      setBooking(res.data);
-      if (res.data.driverId?.location) {
-        const coords = res.data.driverId.location.coordinates;
-        setDriverLocation({ lat: coords[1], lng: coords[0] });
-      }
-    } catch (err) {
-      console.error('Failed to fetch booking:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    try {
-      await api.post(`/bookings/${bookingId}/cancel`);
-      fetchBooking();
-    } catch (err) {
-      console.error('Cancel error:', err);
-    }
-  };
-
-  if (loading) return <LoadingSpinner text="Loading ride details..." />;
-  // Remove tracking if booking not found or unauthorized
-  if (!booking) {
+  if (loading) {
     return (
-      <div className="text-center py-20">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-          <span className="text-5xl">❌</span>
-          <h2 className="text-2xl font-bold text-gray-800 mt-4 mb-2">Tracking Unavailable</h2>
-          <p className="text-gray-500 mb-4">This booking cannot be tracked. It may not exist or you do not have access.</p>
-          <button onClick={() => navigate('/book-ride')} className="bg-[#19e68c] text-black px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-[#16a34a]">Book a New Ride</button>
-        </motion.div>
+      <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#101924] via-[#18222f] to-[#1a3a2c] text-[#19e68c] flex items-center justify-center">
+        <p className="text-lg font-semibold">Loading ride details...</p>
       </div>
     );
   }
 
-  // Animated tracking marker logic
-  const markers = [];
-  if (booking.pickup?.coordinates) {
-    markers.push({
-      lat: booking.pickup.coordinates[1],
-      lng: booking.pickup.coordinates[0],
-      popup: `Pickup: ${booking.pickup.address}`,
-      icon: 'pickup',
-    });
-  }
-  if (booking.drop?.coordinates) {
-    markers.push({
-      lat: booking.drop.coordinates[1],
-      lng: booking.drop.coordinates[0],
-      popup: `Drop: ${booking.drop.address}`,
-      icon: 'drop',
-    });
-  }
-  if (driverLocation) {
-    markers.push({
-      lat: driverLocation.lat,
-      lng: driverLocation.lng,
-      popup: 'Driver',
-      icon: 'car',
-      animate: true,
-    });
-  }
-
-  const fitBounds = markers.length >= 2
-    ? markers.map((m) => [m.lat, m.lng])
-    : null;
-
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    accepted: 'bg-blue-100 text-blue-700',
-    arriving: 'bg-indigo-100 text-indigo-700',
-    'in-progress': 'bg-green-100 text-green-700',
-    completed: 'bg-gray-100 text-gray-700',
-    cancelled: 'bg-red-100 text-red-700',
-  };
-
-  return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#181c24] text-[#e0e6ed]">
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#7c3aed] flex items-center gap-2">🗺️ Track Ride</h1>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${statusColors[booking.status]}`}>{booking.status}</span>
-        </div>
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div>
-            <MapView
-              center={booking.pickup?.coordinates ? [booking.pickup.coordinates[1], booking.pickup.coordinates[0]] : [20.5937, 78.9629]}
-              zoom={13}
-              markers={markers}
-              fitBounds={fitBounds}
-              className="h-[400px] lg:h-[500px]"
-            />
-          </div>
-          <div className="space-y-4">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[#23283a] rounded-2xl p-5 shadow-sm">
-              <h3 className="font-bold text-[#7c3aed] mb-3">Ride Details</h3>
-              <div className="space-y-3 text-base">
-                <div><span className="text-[#a5b4fc]">📍 Pickup</span> <span className="text-white">{booking.pickup?.address}</span></div>
-                <div><span className="text-[#a5b4fc]">🏁 Drop</span> <span className="text-white">{booking.drop?.address}</span></div>
-                <div className="flex justify-between pt-2 border-t border-[#2e3650]">
-                  <span className="text-[#a5b4fc]">Distance</span>
-                  <span className="font-medium text-white">{booking.distance} km</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#a5b4fc]">Fare</span>
-                  <span className="font-bold text-lg text-[#7c3aed]">{formatCurrency(booking.fare?.total)}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  const pickup = booking.pickup?.coordinates;
-                  const drop = booking.drop?.coordinates;
-                  if (pickup && drop) {
-                    const url = `https://www.google.com/maps/dir/?api=1&origin=${pickup[1]},${pickup[0]}&destination=${drop[1]},${drop[0]}&travelmode=driving`;
-                    window.open(url, '_blank');
-                  }
-                }}
-                className="w-full mt-4 bg-gradient-to-r from-[#7c3aed] to-[#19e68c] text-white py-2 rounded-xl text-base font-bold shadow cursor-pointer hover:opacity-90"
-              >
-                🚗 Navigate with Google Maps
-              </button>
-            </motion.div>
-            {booking.driverId && typeof booking.driverId === 'object' && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-[#23283a] rounded-2xl p-5 shadow-sm">
-                <h3 className="font-bold text-[#7c3aed] mb-3">Your Driver</h3>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#2e3650] rounded-full flex items-center justify-center text-2xl">🚗</div>
-                  <div>
-                    <p className="font-medium text-white">{booking.driverId.name}</p>
-                    <p className="text-xs text-[#a5b4fc]">{booking.driverId.vehicle?.type} • ⭐ {booking.driverId.rating?.toFixed(1)}</p>
-                    <p className="text-xs text-[#a5b4fc]">{booking.driverId.phone}</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-            {booking.status === 'pending' && (
-              <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2 }} className="bg-[#fef9c3] rounded-2xl p-5 text-center">
-                <span className="text-3xl">⏳</span>
-                <p className="text-[#b45309] font-bold mt-2">Finding Driver...</p>
-                <p className="text-[#b45309] text-xs mt-1">Please wait while we match you</p>
-              </motion.div>
-            )}
-            {booking.status === 'accepted' && (
-              <div className="bg-[#dbeafe] rounded-2xl p-5 text-center">
-                <span className="text-3xl">🚗</span>
-                <p className="text-black font-bold mt-2">Driver is on the way!</p>
-              </div>
-            )}
-            {booking.status === 'in-progress' && (
-              <div className="bg-[#bbf7d0] rounded-2xl p-5 text-center">
-                <span className="text-3xl">🛣️</span>
-                <p className="text-black font-bold mt-2">Ride in progress</p>
-              </div>
-            )}
-            <div className="space-y-3">
-              {booking.status === 'completed' && (
-                <div className="bg-[#bbf7d0] rounded-2xl p-5 text-center animate-bounce">
-                  <span className="text-3xl">✅</span>
-                  <p className="text-black font-bold mt-2">Ride Completed!</p>
-                </div>
-              )}
-              <button
-                onClick={() => generateInvoicePDF(booking)}
-                className="w-full bg-gradient-to-r from-[#7c3aed] to-[#19e68c] text-white py-3 rounded-xl font-bold shadow-lg cursor-pointer animate-pulse"
-              >
-                🧾 Download PDF Invoice
-              </button>
-              {booking.status === 'completed' && !booking.rating && (
-                <button
-                  onClick={() => navigate(`/rate/${booking._id}`)}
-                  className="w-full bg-[#23283a] text-white py-3 rounded-xl font-medium cursor-pointer border border-[#7c3aed]"
-                >
-                  ⭐ Rate Your Ride
-                </button>
-              )}
-            </div>
-            {!['completed', 'cancelled'].includes(booking.status) && (
-              <button
-                onClick={handleCancel}
-                className="w-full border border-red-300 text-red-600 py-3 rounded-xl text-sm font-medium hover:bg-red-50 cursor-pointer"
-              >
-                Cancel Ride
-              </button>
-            )}
-          </div>
+  if (!booking) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#101924] via-[#18222f] to-[#1a3a2c] text-[#19e68c] flex items-center justify-center px-4">
+        <div className="w-full max-w-2xl border border-[#19e68c] rounded-2xl p-6 bg-[#0a0f0a]/90 text-center">
+          <h2 className="text-2xl font-bold mb-2">Ride Details Unavailable</h2>
+          <p className="text-[#8af0bf]">Booking data could not be loaded.</p>
         </div>
       </div>
+    );
+  }
+
+  const isCompleted = booking.status === 'completed';
+  const driverName = typeof booking.driverId === 'object' ? booking.driverId?.name : 'Not assigned';
+  const completedAt = booking.completedAt || booking.updatedAt || booking.createdAt;
+
+  return (
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-[#101924] via-[#18222f] to-[#1a3a2c] text-[#19e68c] py-8 px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-2xl mx-auto border border-[#19e68c] rounded-2xl p-6 bg-[#0a0f0a]/90 shadow-2xl"
+      >
+        <h1 className="text-2xl font-bold mb-6">Track Ride Details</h1>
+
+        {!isCompleted ? (
+          <motion.div
+            initial={{ opacity: 0.7 }}
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="border border-[#19e68c] rounded-xl p-4 bg-black"
+          >
+            <p className="font-semibold">Ride is not completed yet.</p>
+            <p className="mt-2 text-[#8af0bf]">Booking ID: {booking._id}</p>
+            <p className="text-[#8af0bf]">Status: {booking.status}</p>
+          </motion.div>
+        ) : (
+          <>
+            <div className="space-y-3 text-sm md:text-base border border-[#19e68c] rounded-xl p-4 bg-black">
+              <p><span className="font-semibold">Booking ID:</span> {booking._id}</p>
+              <p><span className="font-semibold">Driver Name:</span> {driverName || 'Not available'}</p>
+              <p><span className="font-semibold">Pickup:</span> {booking.pickup?.address || 'N/A'}</p>
+              <p><span className="font-semibold">Drop:</span> {booking.drop?.address || 'N/A'}</p>
+              <p><span className="font-semibold">Date & Time:</span> {new Date(completedAt).toLocaleString()}</p>
+              <p><span className="font-semibold">Distance:</span> {booking.distance || 0} km</p>
+              <p><span className="font-semibold">Fare:</span> {formatCurrency(booking.fare?.total || 0)}</p>
+              <p><span className="font-semibold">Status:</span> completed</p>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => generateInvoicePDF(booking)}
+              className="w-full mt-5 bg-[#19e68c] text-black py-3 rounded-xl font-bold hover:bg-[#16c579] transition-colors"
+            >
+              Download PDF
+            </motion.button>
+          </>
+        )}
+      </motion.div>
     </div>
   );
 };

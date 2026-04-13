@@ -1,9 +1,77 @@
-
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import BookingBox from "../components/BookingBox";
 import MapView from "../components/MapView";
 
 export default function Home() {
+  const [mapLocations, setMapLocations] = useState({ pickup: null, drop: null });
+  const [route, setRoute] = useState([]);
+
+  useEffect(() => {
+    const pickup = mapLocations.pickup;
+    const drop = mapLocations.drop;
+
+    if (
+      typeof pickup?.lat !== 'number' ||
+      typeof pickup?.lng !== 'number' ||
+      typeof drop?.lat !== 'number' ||
+      typeof drop?.lng !== 'number'
+    ) {
+      setRoute([]);
+      return;
+    }
+
+    let isActive = true;
+
+    const loadRoute = async () => {
+      try {
+        const response = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${pickup.lng},${pickup.lat};${drop.lng},${drop.lat}?overview=full&geometries=geojson`
+        );
+        const data = await response.json();
+        const coordinates = data.routes?.[0]?.geometry?.coordinates;
+
+        if (isActive && coordinates?.length) {
+          setRoute(coordinates.map(([lng, lat]) => [lat, lng]));
+        }
+      } catch {
+        if (isActive) {
+          setRoute([]);
+        }
+      }
+    };
+
+    loadRoute();
+
+    return () => {
+      isActive = false;
+    };
+  }, [mapLocations.drop, mapLocations.pickup]);
+
+  const markers = useMemo(() => {
+    const nextMarkers = [];
+
+    if (typeof mapLocations.pickup?.lat === 'number' && typeof mapLocations.pickup?.lng === 'number') {
+      nextMarkers.push({
+        lat: mapLocations.pickup.lat,
+        lng: mapLocations.pickup.lng,
+        popup: 'Pickup',
+      });
+    }
+
+    if (typeof mapLocations.drop?.lat === 'number' && typeof mapLocations.drop?.lng === 'number') {
+      nextMarkers.push({
+        lat: mapLocations.drop.lat,
+        lng: mapLocations.drop.lng,
+        popup: 'Destination',
+      });
+    }
+
+    return nextMarkers;
+  }, [mapLocations.drop, mapLocations.pickup]);
+
+  const fitBounds = markers.length === 2 ? markers.map((marker) => [marker.lat, marker.lng]) : null;
+  const mapCenter = markers[0] ? [markers[0].lat, markers[0].lng] : [22.9734, 78.6569];
+
   return (
     <div className="bg-gradient-to-br from-[#101924] via-[#18222f] to-[#1a3a2c] min-h-screen text-white">
 
@@ -21,8 +89,20 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-primary mb-8 text-center">
             Book your trusted driver in seconds
           </h2>
-          <div className="w-full max-w-md mb-10">
-            <BookingBox />
+          <div className="w-full max-w-5xl flex flex-col md:flex-row gap-8 items-stretch justify-center mb-10">
+            <div className="flex-1 flex items-center justify-center">
+              <BookingBox onLocationsChange={setMapLocations} />
+            </div>
+            <div className="flex-1 min-h-[320px] max-h-[400px] rounded-2xl overflow-hidden shadow-lg border border-primary bg-black flex items-center justify-center">
+              <MapView
+                center={mapCenter}
+                zoom={markers.length ? 10 : 5}
+                markers={markers}
+                route={route}
+                fitBounds={fitBounds}
+                className="h-full w-full"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -113,24 +193,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 📍 LIVE MAP SECTION */}
-      <section className="px-6 md:px-16 py-16 text-center">
-        <h2 className="text-3xl md:text-4xl mb-4 font-bold">Drivers Near You</h2>
-        <p className="mb-8 text-gray-300">Find and track available drivers in real-time near your location.</p>
-        <div className="flex flex-col md:flex-row gap-8 items-center justify-center">
-          <div className="flex-1 min-w-[300px]">
-            <MapView />
-          </div>
-          <div className="flex-1 min-w-[250px] text-left bg-[#0d2233] p-8 rounded-xl shadow-lg">
-            <h3 className="font-bold mb-4">Features:</h3>
-            <ul className="list-disc ml-6 text-gray-300">
-              <li>Live GPS Tracking</li>
-              <li>Real-time Driver Availability</li>
-              <li>Estimated Arrival Time (ETA)</li>
-            </ul>
-          </div>
-        </div>
-      </section>
 
       {/* 💰 PRICING SECTION */}
       <section className="px-6 md:px-16 py-16 text-center bg-[#081a28]">

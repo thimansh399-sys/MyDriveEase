@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import api from '../utils/api';
 import { getSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
 import MapView from '../components/MapView';
 import { getUserLocation, formatCurrency } from '../utils/helpers';
+import RideHistoryList from '../components/RideHistoryList';
 
 const EMERGENCY_NUMBER = '100'; // Change to your real helpline
 const DriverDashboard = () => {
   const { user, updateUser } = useAuth();
-  const navigate = useNavigate();
   const [driverData, setDriverData] = useState(null);
   const [status, setStatus] = useState(user?.status || 'offline');
   const [location, setLocation] = useState(null);
@@ -19,6 +18,7 @@ const DriverDashboard = () => {
   const [rideHistory, setRideHistory] = useState([]);
   const [availableRides, setAvailableRides] = useState([]);
   const [loadingRides, setLoadingRides] = useState(false);
+  const [activeRoute, setActiveRoute] = useState([]);
   const locationInterval = useRef(null);
 
   useEffect(() => {
@@ -170,6 +170,33 @@ const DriverDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchActiveRoute = async () => {
+      if (!activeRide?.pickup?.coordinates || !activeRide?.drop?.coordinates) {
+        setActiveRoute([]);
+        return;
+      }
+      const [pLng, pLat] = activeRide.pickup.coordinates;
+      const [dLng, dLat] = activeRide.drop.coordinates;
+      try {
+        const res = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${pLng},${pLat};${dLng},${dLat}?overview=full&geometries=geojson`
+        );
+        const data = await res.json();
+        if (data.routes?.length) {
+          const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+          setActiveRoute(coords);
+        } else {
+          setActiveRoute([]);
+        }
+      } catch {
+        setActiveRoute([]);
+      }
+    };
+
+    fetchActiveRoute();
+  }, [activeRide]);
+
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-black via-[#0a1019] to-green-900 px-2 py-6 text-white font-sans">
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, type: 'spring' }} className="max-w-6xl mx-auto">
@@ -189,10 +216,10 @@ const DriverDashboard = () => {
         </div>
         {/* Quick Links & Support */}
         <div className="flex flex-wrap gap-4 mb-8">
-          <a href="/profile" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Profile</a>
-          <a href="/driver/rides" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Ride History</a>
-          <a href="mailto:support@driveease.com" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Support</a>
-          <a href="tel:1800123456" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Call Support</a>
+          <a href="/profile" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Profile</a>
+          <a href="/driver/rides" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Ride History</a>
+          <a href="mailto:support@driveease.com" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Support</a>
+          <a href="tel:1800123456" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Call Support</a>
         </div>
         {/* Status Toggle & Wallet */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
@@ -218,9 +245,7 @@ const DriverDashboard = () => {
                 placeholder="Withdraw amount"
                 className="px-4 py-3 rounded bg-[#222c37] text-white border border-green-400 w-36 text-lg"
               />
-              <button
-                className="px-5 py-3 rounded-2xl bg-green-400 text-black font-bold shadow hover:bg-green-500 transition text-lg"
-              >
+              <button className="px-5 py-3 rounded-2xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-bold shadow hover:brightness-110 transition text-lg">
                 Withdraw
               </button>
             </div>
@@ -253,7 +278,16 @@ const DriverDashboard = () => {
               <MapView
                 center={[location.lat, location.lng]}
                 zoom={15}
-                userLocation={location}
+                markers={[
+                  { lat: location.lat, lng: location.lng, popup: 'Driver' },
+                  ...(activeRide?.pickup?.coordinates
+                    ? [{ lat: activeRide.pickup.coordinates[1], lng: activeRide.pickup.coordinates[0], popup: 'Pickup' }]
+                    : []),
+                  ...(activeRide?.drop?.coordinates
+                    ? [{ lat: activeRide.drop.coordinates[1], lng: activeRide.drop.coordinates[0], popup: 'Drop-off' }]
+                    : []),
+                ]}
+                route={activeRoute}
                 className="h-[400px]"
               />
             )}
@@ -274,7 +308,20 @@ const DriverDashboard = () => {
                 <div className="text-green-300 text-md">Fare: ₹{ride.fare?.total || ride.fare}</div>
                 <div className="text-green-300 text-md">Distance: {ride.distance} km</div>
                 <div className="text-green-300 text-md">Requested: {new Date(ride.createdAt).toLocaleString()}</div>
-                <button onClick={() => acceptRide(ride._id)} className="mt-2 px-5 py-2 rounded-xl bg-green-400 text-black font-bold shadow hover:bg-green-500 transition text-md">Accept Ride</button>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => acceptRide(ride._id)} className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-bold shadow hover:brightness-110 transition text-md">Accept Ride</button>
+                  <button
+                    onClick={() => {
+                      const p = ride.pickup?.coordinates;
+                      const d = ride.drop?.coordinates;
+                      if (!p || !d) return;
+                      window.open(`https://www.google.com/maps/dir/?api=1&origin=${p[1]},${p[0]}&destination=${d[1]},${d[0]}&travelmode=driving`, '_blank');
+                    }}
+                    className="px-4 py-2 rounded-xl border border-green-300 text-green-200 hover:bg-green-900/50 transition"
+                  >
+                    Navigate
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -286,7 +333,7 @@ const DriverDashboard = () => {
                 <div className="mb-2 text-white text-lg">Pickup: <span className="text-green-300">{rideRequest.pickup?.address}</span></div>
                 <div className="mb-2 text-white text-lg">Drop: <span className="text-green-300">{rideRequest.drop?.address}</span></div>
                 <div className="flex gap-4 mt-4">
-                  <button onClick={() => acceptRide(rideRequest.bookingId)} className="px-6 py-3 rounded-2xl bg-green-400 text-black font-extrabold shadow hover:bg-green-500 transition text-lg">Accept</button>
+                  <button onClick={() => acceptRide(rideRequest.bookingId)} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-extrabold shadow hover:brightness-110 transition text-lg">Accept</button>
                   <button onClick={rejectRide} className="px-6 py-3 rounded-2xl bg-red-600 text-white font-extrabold shadow hover:bg-red-700 transition text-lg">Reject</button>
                 </div>
               </motion.div>
@@ -298,9 +345,20 @@ const DriverDashboard = () => {
                 <div className="mb-2 text-white text-lg">Drop: <span className="text-green-300">{activeRide.drop?.address}</span></div>
                 <div className="mb-2 text-white text-lg">Fare: <span className="text-green-300">₹{activeRide.fare?.total || activeRide.fare}</span></div>
                 <div className="mb-2 text-white text-lg">Status: <span className="text-green-300">{activeRide.status}</span></div>
+                <button
+                  onClick={() => {
+                    const p = activeRide.pickup?.coordinates;
+                    const d = activeRide.drop?.coordinates;
+                    if (!p || !d) return;
+                    window.open(`https://www.google.com/maps/dir/?api=1&origin=${p[1]},${p[0]}&destination=${d[1]},${d[0]}&travelmode=driving`, '_blank');
+                  }}
+                  className="px-5 py-2 rounded-xl border border-green-300 text-green-200 hover:bg-green-900/50 transition text-md"
+                >
+                  Open Navigation Map
+                </button>
                 <div className="flex gap-4 mt-4">
-                  {activeRide.status === 'accepted' && <button onClick={startRide} className="px-6 py-3 rounded-2xl bg-yellow-400 text-black font-extrabold shadow hover:bg-yellow-300 transition text-lg">Start Ride</button>}
-                  {activeRide.status === 'in-progress' && <button onClick={completeRide} className="px-6 py-3 rounded-2xl bg-green-400 text-black font-extrabold shadow hover:bg-green-500 transition text-lg">Complete Ride</button>}
+                  {activeRide.status === 'accepted' && <button onClick={startRide} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-yellow-300 to-amber-400 text-black font-extrabold shadow hover:brightness-110 transition text-lg">Start Ride</button>}
+                  {activeRide.status === 'in-progress' && <button onClick={completeRide} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-extrabold shadow hover:brightness-110 transition text-lg">Complete Ride</button>}
                 </div>
               </motion.div>
             )}
@@ -308,15 +366,7 @@ const DriverDashboard = () => {
           {/* Ride History */}
           <div className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400 max-h-[400px] overflow-y-auto lg:col-span-1">
             <div className="font-extrabold mb-4 text-green-400 text-2xl">Ride History</div>
-            {rideHistory.length === 0 && <div className="text-green-300">No completed rides yet.</div>}
-            {rideHistory.map((ride) => (
-              <div key={ride._id} className="mb-6 pb-6 border-b border-green-900 last:border-b-0 last:mb-0 last:pb-0">
-                <div className="text-white font-bold text-lg">{ride.pickup?.address} <span className="text-green-400">→</span> {ride.drop?.address}</div>
-                <div className="text-green-300 text-md">Status: {ride.status}</div>
-                <div className="text-green-300 text-md">Fare: ₹{ride.fare?.total || ride.fare}</div>
-                <div className="text-green-300 text-md">Date: {new Date(ride.createdAt).toLocaleString()}</div>
-              </div>
-            ))}
+            <RideHistoryList rideHistory={rideHistory} />
           </div>
         </div>
       </motion.div>

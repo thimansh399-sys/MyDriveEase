@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 // ...existing code...
 import LoadingSpinner from '../components/LoadingSpinner';
+import { formatCurrency } from '../utils/helpers';
 
 const FILTERS = [
   { label: 'All', value: '' },
@@ -27,7 +28,7 @@ const Drivers = () => {
   const [rating, setRating] = useState('');
   const navigate = useNavigate();
   const [bookingModal, setBookingModal] = useState(null); // {driver, pickup, drop}
-  const [bookingSuccess, setBookingSuccess] = useState(null); // booking id
+  const [bookingSuccess, setBookingSuccess] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
 
   // Accept trip data from navigation state
@@ -95,10 +96,16 @@ const Drivers = () => {
         insurancePlan: insurance || 'none',
         fare: fare?.total || undefined,
       });
-      setBookingSuccess(res.data.bookingId || res.data._id || 'BOOK123');
+      setBookingSuccess({
+        id: res.data._id || res.data.bookingId || 'BOOK123',
+        pickup: res.data.pickup?.address || pickup?.address || pickup || 'N/A',
+        drop: res.data.drop?.address || drop?.address || drop || 'N/A',
+        driverName: res.data.status === 'accepted' ? driver?.name : null,
+        status: res.data.status || 'pending',
+      });
       setBookingModal(null);
     } catch {
-      setBookingSuccess('ERROR');
+      setBookingSuccess({ error: true });
     }
     setBookingLoading(false);
   };
@@ -109,10 +116,40 @@ const Drivers = () => {
     return (
       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold mb-4 text-green-600">Booking Successful!</h2>
-          <p className="mb-2">Your booking ID:</p>
-          <div className="text-lg font-mono bg-gray-100 rounded p-2 mb-4">{bookingSuccess}</div>
-          <button className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={() => setBookingSuccess(null)}>Close</button>
+          {bookingSuccess.error ? (
+            <>
+              <h2 className="text-2xl font-bold mb-3 text-red-600">Booking Failed</h2>
+              <p className="mb-4 text-gray-600">Please try again.</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold mb-3 text-green-600">Ride Confirmed</h2>
+              <div className="space-y-2 text-sm text-left bg-gray-50 rounded-lg p-4 mb-4">
+                <p><span className="font-semibold">Booking ID:</span> {bookingSuccess.id}</p>
+                <p><span className="font-semibold">Pickup:</span> {bookingSuccess.pickup}</p>
+                <p><span className="font-semibold">Drop:</span> {bookingSuccess.drop}</p>
+                {bookingSuccess.driverName ? (
+                  <p><span className="font-semibold">Driver:</span> {bookingSuccess.driverName}</p>
+                ) : (
+                  <p className="text-gray-600">Driver will be assigned soon. Check My Bookings for full details.</p>
+                )}
+              </div>
+            </>
+          )}
+          <div className="flex gap-2 justify-center">
+            <button
+              className="bg-green-500 text-white px-5 py-2 rounded-lg font-semibold"
+              onClick={() => {
+                setBookingSuccess(null);
+                navigate('/my-rides');
+              }}
+            >
+              My Bookings
+            </button>
+            <button className="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg font-semibold" onClick={() => setBookingSuccess(null)}>
+              Close
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -172,9 +209,45 @@ const Drivers = () => {
                 <span className="text-xs text-green-300 font-bold">{driver.totalRides || 0} rides</span>
                 <span className="text-xs text-gray-400 ml-auto">{driver.phone}</span>
               </div>
+              <button
+                onClick={() => bookDriver(driver._id)}
+                className="mt-3 bg-green-400 text-black font-bold py-2 rounded-xl hover:bg-green-300 transition-colors"
+              >
+                Book This Driver
+              </button>
             </div>
           ))}
         </div>
+
+        {bookingModal && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-3">
+            <div className="bg-white rounded-xl p-6 w-full max-w-lg">
+              <h2 className="text-xl font-bold mb-4 text-gray-900">Confirm Ride Booking</h2>
+              <div className="space-y-2 text-sm text-gray-700 mb-5">
+                <p><span className="font-semibold">Driver:</span> {bookingModal.driver?.name}</p>
+                <p><span className="font-semibold">Pickup:</span> {bookingModal.pickup?.address || 'N/A'}</p>
+                <p><span className="font-semibold">Drop:</span> {bookingModal.drop?.address || 'N/A'}</p>
+                <p><span className="font-semibold">Distance:</span> {bookingModal.distance || 0} km</p>
+                <p><span className="font-semibold">Fare:</span> {formatCurrency(bookingModal.fare?.total || 0)}</p>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setBookingModal(null)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBooking}
+                  disabled={bookingLoading}
+                  className="px-4 py-2 rounded-lg bg-green-500 text-white font-semibold disabled:opacity-60"
+                >
+                  {bookingLoading ? 'Booking...' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
