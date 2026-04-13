@@ -40,16 +40,17 @@ const Drivers = () => {
     const fetchDrivers = async () => {
       setLoading(true);
       try {
-        const params = {
-          state,
-          city,
-          pincode,
-          type: driverType,
-          status: availability,
-          rating: rating ? Number(rating) : undefined,
-        };
-        const res = await api.get('/drivers/approved', { params });
-        setDrivers(res.data);
+        // Use /drivers/all to get all drivers, then filter client-side
+        const res = await api.get('/drivers/all');
+        let allDrivers = res.data || [];
+        // Filter by state, city, pincode, type, status, rating
+        if (state) allDrivers = allDrivers.filter(d => d.location?.state?.toLowerCase().includes(state.toLowerCase()));
+        if (city) allDrivers = allDrivers.filter(d => d.location?.city?.toLowerCase().includes(city.toLowerCase()));
+        if (pincode) allDrivers = allDrivers.filter(d => d.location?.pincode?.toLowerCase().includes(pincode.toLowerCase()));
+        if (driverType) allDrivers = allDrivers.filter(d => d.vehicle?.type === driverType);
+        if (availability) allDrivers = allDrivers.filter(d => d.status === availability);
+        if (rating) allDrivers = allDrivers.filter(d => (d.rating || 0) >= Number(rating));
+        setDrivers(allDrivers);
       } catch {
         setDrivers([]);
       } finally {
@@ -147,9 +148,33 @@ const Drivers = () => {
         {drivers.length === 0 && (
           <div className="text-center py-20">
             <span className="text-5xl text-[#19e68c]">🔍</span>
-            <p className="text-[#19e68c] mt-4">No drivers found nearby. Try adjusting your filters.</p>
+            <p className="text-[#19e68c] mt-4">No drivers found. Try adjusting your filters.</p>
           </div>
         )}
+
+        {/* Driver List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {drivers.map(driver => (
+            <div key={driver._id} className="rounded-2xl bg-gradient-to-br from-black via-[#0a1019] to-green-900 p-7 shadow-xl border-2 border-green-400 flex flex-col gap-3 hover:scale-105 transition-transform duration-200">
+              <div className="flex items-center gap-4 mb-2">
+                <span className={`w-4 h-4 rounded-full border-2 ${driver.status === 'online' ? 'bg-green-400 border-green-300 animate-pulse' : 'bg-gray-400 border-gray-300'} shadow`}></span>
+                <span className="font-extrabold text-2xl text-white tracking-tight">{driver.name}</span>
+                <span className={`ml-auto px-3 py-1 rounded-2xl text-xs font-bold uppercase tracking-wider ${driver.status === 'online' ? 'bg-green-400 text-black' : 'bg-gray-700 text-white'}`}>{driver.status}</span>
+              </div>
+              <div className="flex flex-wrap gap-3 items-center">
+                <span className="text-green-300 font-bold text-lg">{driver.vehicle?.type?.toUpperCase()}</span>
+                {driver.vehicle?.model && <span className="text-white text-md">{driver.vehicle.model}</span>}
+                {driver.vehicle?.plate && <span className="text-gray-400 text-sm">({driver.vehicle.plate})</span>}
+              </div>
+              <div className="text-lg text-green-200">{driver.location?.city}, {driver.location?.state} {driver.location?.pincode}</div>
+              <div className="flex gap-4 mt-2 items-center">
+                <span className="text-yellow-400 font-extrabold text-lg">⭐ {driver.rating?.toFixed(1) || 'N/A'}</span>
+                <span className="text-xs text-green-300 font-bold">{driver.totalRides || 0} rides</span>
+                <span className="text-xs text-gray-400 ml-auto">{driver.phone}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

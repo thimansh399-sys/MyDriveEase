@@ -1,0 +1,2 @@
+// Place your company logo here for PDF invoices
+// Example: import this as logo from '../assets/logo.png';

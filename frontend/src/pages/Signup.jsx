@@ -48,13 +48,13 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-background dark:bg-[#0a1019] px-4 py-8">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-gradient-to-br from-[#101924] via-[#18222f] to-[#1a3a2c] px-4 py-8 text-white">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="bg-card dark:bg-[#101a24] rounded-2xl shadow-2xl p-10 border border-border">
+        <div className="bg-card rounded-2xl shadow-2xl p-10 border border-border">
           <div className="text-center mb-8">
             <span className="text-4xl">🚗</span>
             <h1 className="text-3xl font-extrabold text-primary mt-2">Create Account</h1>
@@ -62,7 +62,7 @@ const Signup = () => {
           </div>
 
           {/* Role Toggle */}
-          <div className="flex bg-white dark:bg-[#16202b] rounded-xl p-1 mb-6 border border-border">
+          <div className="flex bg-[#18222f] rounded-xl p-1 mb-6 border border-border">
             {['user', 'driver'].map((r) => (
               <button
                 key={r}
@@ -71,7 +71,7 @@ const Signup = () => {
                 className={`flex-1 py-2 rounded-lg text-sm font-extrabold transition-all cursor-pointer ${
                   form.role === r
                     ? 'bg-primary text-black shadow-sm'
-                    : 'text-black dark:text-white hover:text-primary'
+                    : 'text-white hover:text-primary'
                 }`}
               >
                 {r === 'user' ? '👤 Rider' : '🚘 Driver'}
@@ -91,7 +91,7 @@ const Signup = () => {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Your name"
-                className="w-full px-4 py-3 border border-border bg-white dark:bg-[#16202b] text-black dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
+                className="w-full px-4 py-3 border border-border bg-[#18222f] text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
                 required
               />
             </div>
@@ -103,7 +103,7 @@ const Signup = () => {
                 value={form.phone}
                 onChange={handleChange}
                 placeholder="Phone number"
-                className="w-full px-4 py-3 border border-border bg-white dark:bg-[#16202b] text-black dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
+                className="w-full px-4 py-3 border border-border bg-[#18222f] text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
                 required
               />
             </div>
@@ -115,7 +115,7 @@ const Signup = () => {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Min 6 characters"
-                className="w-full px-4 py-3 border border-border bg-white dark:bg-[#16202b] text-black dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
+                className="w-full px-4 py-3 border border-border bg-[#18222f] text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
                 required
                 minLength={6}
               />
@@ -132,7 +132,7 @@ const Signup = () => {
                   name="vehicleType"
                   value={form.vehicleType}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-border bg-white dark:bg-[#16202b] text-black dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full px-4 py-3 border border-border bg-[#18222f] text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                 >
                   <option value="sedan">Sedan</option>
                   <option value="suv">SUV</option>
@@ -145,14 +145,14 @@ const Signup = () => {
                   value={form.vehicleModel}
                   onChange={handleChange}
                   placeholder="Vehicle model (e.g., Swift Dzire)"
-                  className="w-full px-4 py-3 border border-border bg-white dark:bg-[#16202b] text-black dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
+                  className="w-full px-4 py-3 border border-border bg-[#18222f] text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
                 />
                 <input
                   name="vehiclePlate"
                   value={form.vehiclePlate}
                   onChange={handleChange}
                   placeholder="License plate"
-                  className="w-full px-4 py-3 border border-border bg-white dark:bg-[#16202b] text-black dark:text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
+                  className="w-full px-4 py-3 border border-border bg-[#18222f] text-white rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none placeholder-gray-400"
                 />
               </motion.div>
             )}
@@ -167,7 +167,7 @@ const Signup = () => {
             </motion.button>
           </form>
 
-          <p className="text-center text-sm text-black dark:text-white mt-6">
+          <p className="text-center text-sm text-white mt-6">
             Already have an account?{' '}
             <Link to="/login" className="text-primary font-extrabold hover:underline">
               Sign In

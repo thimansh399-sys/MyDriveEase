@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import MapView from '../components/MapView';
 import { getUserLocation, formatCurrency } from '../utils/helpers';
 
+const EMERGENCY_NUMBER = '100'; // Change to your real helpline
 const DriverDashboard = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -15,12 +16,44 @@ const DriverDashboard = () => {
   const [location, setLocation] = useState(null);
   const [rideRequest, setRideRequest] = useState(null);
   const [activeRide, setActiveRide] = useState(null);
+  const [rideHistory, setRideHistory] = useState([]);
+  const [availableRides, setAvailableRides] = useState([]);
+  const [loadingRides, setLoadingRides] = useState(false);
   const locationInterval = useRef(null);
 
   useEffect(() => {
     fetchDriverData();
     fetchActiveRide();
+    fetchRideHistory();
+    fetchAvailableRides();
   }, []);
+
+  // Poll for available rides every 30s if online
+  useEffect(() => {
+    if (status === 'online') {
+      const interval = setInterval(fetchAvailableRides, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [status]);
+    const fetchAvailableRides = async () => {
+      setLoadingRides(true);
+      try {
+        const res = await api.get('/bookings/available');
+        setAvailableRides(res.data);
+      } catch {
+        setAvailableRides([]);
+      } finally {
+        setLoadingRides(false);
+      }
+    };
+  // Fetch all completed and past rides for history
+  const fetchRideHistory = async () => {
+    try {
+      const res = await api.get('/bookings/driver/my');
+      const history = res.data.filter((b) => b.status === 'completed' || b.status === 'cancelled');
+      setRideHistory(history);
+    } catch { /* ignore */ }
+  };
 
   useEffect(() => {
     const socket = getSocket();
@@ -98,15 +131,15 @@ const DriverDashboard = () => {
     }
   };
 
-  const acceptRide = async () => {
-    if (!rideRequest) return;
+  const acceptRide = async (bookingId) => {
     try {
-      const res = await api.post(`/bookings/${rideRequest.bookingId}/accept`);
+      const res = await api.post(`/bookings/${bookingId}/accept`);
       setActiveRide(res.data);
-      setRideRequest(null);
+      setAvailableRides((prev) => prev.filter((r) => r._id !== bookingId));
       setStatus('on-ride');
     } catch (err) {
       console.error('Accept error:', err);
+      fetchAvailableRides();
     }
   };
 
@@ -131,41 +164,91 @@ const DriverDashboard = () => {
       setActiveRide(null);
       setStatus('online');
       fetchDriverData();
+      fetchRideHistory();
     } catch (err) {
       console.error('Complete error:', err);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50">
-      <div className="max-w-5xl mx-auto p-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">📊 Driver Dashboard</h1>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: 'Status', value: status, icon: status === 'online' ? '🟢' : status === 'on-ride' ? '🚗' : '🔴' },
-            { label: 'Rating', value: `⭐ ${driverData?.rating?.toFixed(1) || '5.0'}`, icon: '⭐' },
-            { label: 'Total Rides', value: driverData?.totalRides || 0, icon: '🚕' },
-            { label: 'Earnings', value: formatCurrency(driverData?.earnings || 0), icon: '💰' },
-          ].map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white rounded-2xl p-4 shadow-sm"
+    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-black via-[#0a1019] to-green-900 px-2 py-6 text-white font-sans">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, type: 'spring' }} className="max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
+          <motion.h1 initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ duration: 0.5 }} className="text-4xl md:text-5xl font-extrabold mb-2 text-green-400 tracking-tight">Welcome, Captain!</motion.h1>
+          <div className="ml-auto flex flex-col gap-2 items-end">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.open(`tel:${EMERGENCY_NUMBER}`)}
+              className="px-5 py-2 rounded-xl bg-red-600 text-white font-bold shadow hover:bg-red-700 transition flex items-center gap-2 text-lg"
+              title="Emergency Helpline"
             >
-              <span className="text-2xl">{stat.icon}</span>
-              <p className="text-xs text-gray-500 mt-2">{stat.label}</p>
-              <p className="text-lg font-bold text-gray-900 capitalize">{stat.value}</p>
-            </motion.div>
-          ))}
+              🚨 Emergency: {EMERGENCY_NUMBER}
+            </motion.button>
+            <span className="text-xs text-gray-300">Tap to call emergency helpline</span>
+          </div>
         </div>
-
-        <div className="grid lg:grid-cols-2 gap-6">
+        {/* Quick Links & Support */}
+        <div className="flex flex-wrap gap-4 mb-8">
+          <a href="/profile" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Profile</a>
+          <a href="/driver/rides" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Ride History</a>
+          <a href="mailto:support@driveease.com" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Support</a>
+          <a href="tel:1800123456" className="bg-green-900/80 hover:bg-green-800 text-green-300 px-5 py-3 rounded-xl font-bold shadow transition text-lg">Call Support</a>
+        </div>
+        {/* Status Toggle & Wallet */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
+          <div className="flex items-center gap-3">
+            <motion.span animate={{ scale: status === 'online' ? 1.2 : 1 }} className={`w-4 h-4 rounded-full ${status === 'online' ? 'bg-green-400' : status === 'on-ride' ? 'bg-yellow-400' : 'bg-gray-400'} border-2 border-white shadow`}></motion.span>
+            <span className="text-2xl font-bold text-white uppercase tracking-wide">{status === 'online' ? 'Online' : status === 'on-ride' ? 'On Ride' : 'Offline'}</span>
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={toggleStatus}
+              disabled={status === 'on-ride'}
+              className={`ml-4 px-6 py-3 rounded-2xl text-lg font-extrabold shadow transition disabled:opacity-50 ${status === 'online' ? 'bg-black text-green-400 border-2 border-green-400 hover:bg-green-900' : 'bg-green-400 text-black hover:bg-green-500'}`}
+            >
+              {status === 'online' ? 'Go Offline' : 'Go Online'}
+            </motion.button>
+          </div>
+          <div className="ml-auto flex flex-col gap-2 items-end">
+            <div className="text-lg text-green-300">Wallet Balance</div>
+            <div className="text-3xl font-extrabold text-green-400">₹{driverData?.wallet || 0}</div>
+            <div className="flex gap-2 mt-2">
+              <input
+                type="number"
+                min="1"
+                placeholder="Withdraw amount"
+                className="px-4 py-3 rounded bg-[#222c37] text-white border border-green-400 w-36 text-lg"
+              />
+              <button
+                className="px-5 py-3 rounded-2xl bg-green-400 text-black font-bold shadow hover:bg-green-500 transition text-lg"
+              >
+                Withdraw
+              </button>
+            </div>
+          </div>
+        </motion.div>
+        {/* Stats */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-6 mb-8">
+          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
+            <div className="text-green-300 text-lg mb-1">Earnings Today</div>
+            <div className="text-3xl font-extrabold text-green-400">₹{driverData?.earningsToday || 0}</div>
+          </div>
+          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
+            <div className="text-green-300 text-lg mb-1">Rides Today</div>
+            <div className="text-3xl font-extrabold text-green-400">{driverData?.ridesToday || 0}</div>
+          </div>
+          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
+            <div className="text-green-300 text-lg mb-1">Total Earnings</div>
+            <div className="text-3xl font-extrabold text-green-400">₹{driverData?.earnings || 0}</div>
+          </div>
+          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
+            <div className="text-green-300 text-lg mb-1">Total Rides</div>
+            <div className="text-3xl font-extrabold text-green-400">{driverData?.totalRides || 0}</div>
+          </div>
+        </motion.div>
+        {/* Map, Available Rides, Ride Logic, and Ride History */}
+        <div className="grid lg:grid-cols-4 gap-6">
           {/* Map */}
-          <div>
+          <div className="lg:col-span-1">
             {location && (
               <MapView
                 center={[location.lat, location.lng]}
@@ -175,141 +258,68 @@ const DriverDashboard = () => {
               />
             )}
             {!location && (
-              <div className="h-[400px] bg-gray-200 rounded-2xl flex items-center justify-center">
-                <p className="text-gray-500">Go online to see your location</p>
+              <div className="h-[400px] bg-black/60 rounded-2xl flex items-center justify-center">
+                <p className="text-green-400 text-xl">Go online to see your location</p>
               </div>
             )}
           </div>
-
-          {/* Controls */}
-          <div className="space-y-4">
-            {/* Toggle Online/Offline */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4">Go Online</h3>
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={toggleStatus}
-                disabled={status === 'on-ride'}
-                className={`w-full py-4 rounded-xl font-bold text-lg transition-colors cursor-pointer disabled:opacity-50 ${
-                  status === 'online'
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : status === 'on-ride'
-                    ? 'bg-yellow-500 text-white'
-                    : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
-              >
-                {status === 'online'
-                  ? '🔴 Go Offline'
-                  : status === 'on-ride'
-                  ? '🚗 On a Ride'
-                  : '🟢 Go Online'}
-              </motion.button>
-            </div>
-
-            {/* Active Ride */}
-            {activeRide && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border-2 border-green-200"
-              >
-                <h3 className="font-bold text-gray-900 mb-3">🚗 Active Ride</h3>
-                <div className="space-y-2 text-sm mb-4">
-                  <p><span className="text-gray-500">📍 Pickup:</span> {activeRide.pickup?.address}</p>
-                  <p><span className="text-gray-500">🏁 Drop:</span> {activeRide.drop?.address}</p>
-                  <p><span className="text-gray-500">💰 Fare:</span> <strong>{formatCurrency(activeRide.fare?.total)}</strong></p>
-                  <p><span className="text-gray-500">Status:</span> <span className="capitalize font-medium">{activeRide.status}</span></p>
+          {/* Available Rides */}
+          <div className="bg-black/80 rounded-2xl p-6 shadow border-2 border-green-400 max-h-[400px] overflow-y-auto lg:col-span-1">
+            <div className="font-extrabold mb-4 text-green-400 text-2xl">Available Rides</div>
+            {loadingRides && <div className="text-green-300">Loading...</div>}
+            {!loadingRides && availableRides.length === 0 && <div className="text-green-300">No available rides right now.</div>}
+            {availableRides.map((ride) => (
+              <div key={ride._id} className="mb-6 pb-6 border-b border-green-900 last:border-b-0 last:mb-0 last:pb-0">
+                <div className="text-white font-bold text-lg">{ride.pickup?.address} <span className="text-green-400">→</span> {ride.drop?.address}</div>
+                <div className="text-green-300 text-md">Fare: ₹{ride.fare?.total || ride.fare}</div>
+                <div className="text-green-300 text-md">Distance: {ride.distance} km</div>
+                <div className="text-green-300 text-md">Requested: {new Date(ride.createdAt).toLocaleString()}</div>
+                <button onClick={() => acceptRide(ride._id)} className="mt-2 px-5 py-2 rounded-xl bg-green-400 text-black font-bold shadow hover:bg-green-500 transition text-md">Accept Ride</button>
+              </div>
+            ))}
+          </div>
+          {/* Ride Request/Active Ride */}
+          <div className="space-y-4 lg:col-span-1">
+            {rideRequest && (
+              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400">
+                <div className="font-extrabold mb-2 text-green-400 text-2xl animate-pulse">New Ride Request</div>
+                <div className="mb-2 text-white text-lg">Pickup: <span className="text-green-300">{rideRequest.pickup?.address}</span></div>
+                <div className="mb-2 text-white text-lg">Drop: <span className="text-green-300">{rideRequest.drop?.address}</span></div>
+                <div className="flex gap-4 mt-4">
+                  <button onClick={() => acceptRide(rideRequest.bookingId)} className="px-6 py-3 rounded-2xl bg-green-400 text-black font-extrabold shadow hover:bg-green-500 transition text-lg">Accept</button>
+                  <button onClick={rejectRide} className="px-6 py-3 rounded-2xl bg-red-600 text-white font-extrabold shadow hover:bg-red-700 transition text-lg">Reject</button>
                 </div>
-
-                {activeRide.status === 'accepted' && (
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={startRide}
-                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium cursor-pointer"
-                  >
-                    🚗 Start Ride
-                  </motion.button>
-                )}
-                {activeRide.status === 'in-progress' && (
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={completeRide}
-                    className="w-full bg-green-600 text-white py-3 rounded-xl font-medium cursor-pointer"
-                  >
-                    ✅ Complete Ride
-                  </motion.button>
-                )}
               </motion.div>
             )}
-
-            {/* Vehicle Info */}
-            {driverData?.vehicle && (
-              <div className="bg-white rounded-2xl p-5 shadow-sm">
-                <h3 className="font-bold text-gray-900 mb-2">🚘 Vehicle</h3>
-                <p className="text-sm text-gray-600 capitalize">
-                  {driverData.vehicle.type} {driverData.vehicle.model && `— ${driverData.vehicle.model}`}
-                </p>
-                {driverData.vehicle.plate && (
-                  <p className="text-xs text-gray-400 mt-1">{driverData.vehicle.plate}</p>
-                )}
-              </div>
+            {activeRide && (
+              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400">
+                <div className="font-extrabold mb-2 text-green-400 text-2xl">Active Ride</div>
+                <div className="mb-2 text-white text-lg">Pickup: <span className="text-green-300">{activeRide.pickup?.address}</span></div>
+                <div className="mb-2 text-white text-lg">Drop: <span className="text-green-300">{activeRide.drop?.address}</span></div>
+                <div className="mb-2 text-white text-lg">Fare: <span className="text-green-300">₹{activeRide.fare?.total || activeRide.fare}</span></div>
+                <div className="mb-2 text-white text-lg">Status: <span className="text-green-300">{activeRide.status}</span></div>
+                <div className="flex gap-4 mt-4">
+                  {activeRide.status === 'accepted' && <button onClick={startRide} className="px-6 py-3 rounded-2xl bg-yellow-400 text-black font-extrabold shadow hover:bg-yellow-300 transition text-lg">Start Ride</button>}
+                  {activeRide.status === 'in-progress' && <button onClick={completeRide} className="px-6 py-3 rounded-2xl bg-green-400 text-black font-extrabold shadow hover:bg-green-500 transition text-lg">Complete Ride</button>}
+                </div>
+              </motion.div>
             )}
+          </div>
+          {/* Ride History */}
+          <div className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400 max-h-[400px] overflow-y-auto lg:col-span-1">
+            <div className="font-extrabold mb-4 text-green-400 text-2xl">Ride History</div>
+            {rideHistory.length === 0 && <div className="text-green-300">No completed rides yet.</div>}
+            {rideHistory.map((ride) => (
+              <div key={ride._id} className="mb-6 pb-6 border-b border-green-900 last:border-b-0 last:mb-0 last:pb-0">
+                <div className="text-white font-bold text-lg">{ride.pickup?.address} <span className="text-green-400">→</span> {ride.drop?.address}</div>
+                <div className="text-green-300 text-md">Status: {ride.status}</div>
+                <div className="text-green-300 text-md">Fare: ₹{ride.fare?.total || ride.fare}</div>
+                <div className="text-green-300 text-md">Date: {new Date(ride.createdAt).toLocaleString()}</div>
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Ride Request Modal */}
-        <AnimatePresence>
-          {rideRequest && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            >
-              <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="bg-white rounded-2xl p-6 max-w-md w-full"
-              >
-                <div className="text-center mb-4">
-                  <motion.span
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 1 }}
-                    className="text-5xl inline-block"
-                  >
-                    🔔
-                  </motion.span>
-                  <h3 className="text-xl font-bold text-gray-900 mt-2">New Ride Request!</h3>
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-4 mb-4 text-sm space-y-2">
-                  <p><span className="text-gray-500">📍 Pickup:</span> {rideRequest.pickup?.address}</p>
-                  <p><span className="text-gray-500">🏁 Drop:</span> {rideRequest.drop?.address}</p>
-                  <p><span className="text-gray-500">📏 Distance:</span> {rideRequest.distance} km</p>
-                  <p><span className="text-gray-500">💰 Fare:</span> <strong>{formatCurrency(rideRequest.fare?.total)}</strong></p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={rejectRide}
-                    className="flex-1 py-3 border border-red-300 text-red-600 rounded-xl font-medium cursor-pointer hover:bg-red-50"
-                  >
-                    Reject
-                  </button>
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={acceptRide}
-                    className="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium cursor-pointer hover:bg-green-700"
-                  >
-                    Accept ✓
-                  </motion.button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      </motion.div>
     </div>
   );
 };

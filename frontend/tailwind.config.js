@@ -7,13 +7,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#22c55e', // Ola/Uber green
-        dark: '#0a1019', // Deep dark
+        primary: '#19e68c', // Bright green
+        dark: '#101924', // Deep dark
         accent: '#19e6c1', // Accent teal
-        background: '#ffffff', // White backgrounds
-        text: '#111111', // Black text
-        card: '#f8fafc', // Card backgrounds
-        border: '#e5e7eb', // Light border
+        background: '#18222f', // Main background
+        text: '#e5e7eb', // Light text
+        card: '#18222f', // Card backgrounds
+        border: '#22313f', // Muted border
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
