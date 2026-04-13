@@ -15,8 +15,7 @@ import LiveMap from './pages/LiveMap';
 import DriverDashboard from './pages/DriverDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import DriverRides from './pages/DriverRides';
-import UserProfile from './pages/UserProfile';
-import DriverProfile from './pages/DriverProfile';
+import ProfileDashboard from './pages/ProfileDashboard';
 import PaymentGateway from './pages/PaymentGateway';
 import Plans from './pages/Plans';
 import Insurance from './pages/Insurance';
@@ -56,7 +55,7 @@ function AppRoutes() {
       <Route path="/track" element={<ProtectedRoute role="user"><LiveMap /></ProtectedRoute>} />
 
       <Route path="/payment" element={<ProtectedRoute role="user"><PaymentGateway /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute role="user"><UserProfile /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
 
       {/* Driver Routes */}
 
@@ -65,7 +64,7 @@ function AppRoutes() {
 
       <Route path="/driver/dashboard" element={<ProtectedRoute role="driver"><DriverDashboard /></ProtectedRoute>} />
       <Route path="/driver/rides" element={<ProtectedRoute role="driver"><DriverRides /></ProtectedRoute>} />
-      <Route path="/driver/profile" element={<ProtectedRoute role="driver"><DriverProfile /></ProtectedRoute>} />
+
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

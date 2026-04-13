@@ -6,6 +6,7 @@ import { getSocket } from '../utils/socket';
 import MapView from '../components/MapView';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/helpers';
+import { generateInvoicePDF } from '../utils/invoice';
 
 const TrackRide = () => {
   const { bookingId } = useParams();
@@ -81,20 +82,28 @@ const TrackRide = () => {
   };
 
   if (loading) return <LoadingSpinner text="Loading ride details..." />;
+  // Remove tracking if booking not found or unauthorized
   if (!booking) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Booking not found</p>
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+          <span className="text-5xl">❌</span>
+          <h2 className="text-2xl font-bold text-gray-800 mt-4 mb-2">Tracking Unavailable</h2>
+          <p className="text-gray-500 mb-4">This booking cannot be tracked. It may not exist or you do not have access.</p>
+          <button onClick={() => navigate('/book-ride')} className="bg-[#19e68c] text-black px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-[#16a34a]">Book a New Ride</button>
+        </motion.div>
       </div>
     );
   }
 
+  // Animated tracking marker logic
   const markers = [];
   if (booking.pickup?.coordinates) {
     markers.push({
       lat: booking.pickup.coordinates[1],
       lng: booking.pickup.coordinates[0],
       popup: `Pickup: ${booking.pickup.address}`,
+      icon: 'pickup',
     });
   }
   if (booking.drop?.coordinates) {
@@ -102,6 +111,7 @@ const TrackRide = () => {
       lat: booking.drop.coordinates[1],
       lng: booking.drop.coordinates[0],
       popup: `Drop: ${booking.drop.address}`,
+      icon: 'drop',
     });
   }
   if (driverLocation) {
@@ -109,6 +119,8 @@ const TrackRide = () => {
       lat: driverLocation.lat,
       lng: driverLocation.lng,
       popup: 'Driver',
+      icon: 'car',
+      animate: true,
     });
   }
 
@@ -126,126 +138,105 @@ const TrackRide = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50">
-      <div className="max-w-5xl mx-auto p-4">
+    <div className="min-h-[calc(100vh-64px)] bg-[#181c24] text-[#e0e6ed]">
+      <div className="max-w-4xl mx-auto p-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">🗺️ Track Ride</h1>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${statusColors[booking.status]}`}>
-            {booking.status}
-          </span>
+          <h1 className="text-2xl font-bold text-[#7c3aed] flex items-center gap-2">🗺️ Track Ride</h1>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${statusColors[booking.status]}`}>{booking.status}</span>
         </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div>
             <MapView
-              center={
-                booking.pickup?.coordinates
-                  ? [booking.pickup.coordinates[1], booking.pickup.coordinates[0]]
-                  : [20.5937, 78.9629]
-              }
+              center={booking.pickup?.coordinates ? [booking.pickup.coordinates[1], booking.pickup.coordinates[0]] : [20.5937, 78.9629]}
               zoom={13}
               markers={markers}
               fitBounds={fitBounds}
               className="h-[400px] lg:h-[500px]"
             />
           </div>
-
           <div className="space-y-4">
-            {/* Ride Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-5 shadow-sm"
-            >
-              <h3 className="font-bold text-gray-900 mb-3">Ride Details</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span className="text-gray-500">📍 Pickup</span>
-                  <p className="text-gray-900">{booking.pickup?.address}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">🏁 Drop</span>
-                  <p className="text-gray-900">{booking.drop?.address}</p>
-                </div>
-                <div className="flex justify-between pt-2 border-t">
-                  <span className="text-gray-500">Distance</span>
-                  <span className="font-medium">{booking.distance} km</span>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[#23283a] rounded-2xl p-5 shadow-sm">
+              <h3 className="font-bold text-[#7c3aed] mb-3">Ride Details</h3>
+              <div className="space-y-3 text-base">
+                <div><span className="text-[#a5b4fc]">📍 Pickup</span> <span className="text-white">{booking.pickup?.address}</span></div>
+                <div><span className="text-[#a5b4fc]">🏁 Drop</span> <span className="text-white">{booking.drop?.address}</span></div>
+                <div className="flex justify-between pt-2 border-t border-[#2e3650]">
+                  <span className="text-[#a5b4fc]">Distance</span>
+                  <span className="font-medium text-white">{booking.distance} km</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Fare</span>
-                  <span className="font-bold text-lg">{formatCurrency(booking.fare?.total)}</span>
+                  <span className="text-[#a5b4fc]">Fare</span>
+                  <span className="font-bold text-lg text-[#7c3aed]">{formatCurrency(booking.fare?.total)}</span>
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  const pickup = booking.pickup?.coordinates;
+                  const drop = booking.drop?.coordinates;
+                  if (pickup && drop) {
+                    const url = `https://www.google.com/maps/dir/?api=1&origin=${pickup[1]},${pickup[0]}&destination=${drop[1]},${drop[0]}&travelmode=driving`;
+                    window.open(url, '_blank');
+                  }
+                }}
+                className="w-full mt-4 bg-gradient-to-r from-[#7c3aed] to-[#19e68c] text-white py-2 rounded-xl text-base font-bold shadow cursor-pointer hover:opacity-90"
+              >
+                🚗 Navigate with Google Maps
+              </button>
             </motion.div>
-
-            {/* Driver Info */}
             {booking.driverId && typeof booking.driverId === 'object' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl p-5 shadow-sm"
-              >
-                <h3 className="font-bold text-gray-900 mb-3">Your Driver</h3>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-[#23283a] rounded-2xl p-5 shadow-sm">
+                <h3 className="font-bold text-[#7c3aed] mb-3">Your Driver</h3>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl">
-                    🚗
-                  </div>
+                  <div className="w-12 h-12 bg-[#2e3650] rounded-full flex items-center justify-center text-2xl">🚗</div>
                   <div>
-                    <p className="font-medium text-gray-900">{booking.driverId.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {booking.driverId.vehicle?.type} • ⭐ {booking.driverId.rating?.toFixed(1)}
-                    </p>
-                    <p className="text-xs text-gray-400">{booking.driverId.phone}</p>
+                    <p className="font-medium text-white">{booking.driverId.name}</p>
+                    <p className="text-xs text-[#a5b4fc]">{booking.driverId.vehicle?.type} • ⭐ {booking.driverId.rating?.toFixed(1)}</p>
+                    <p className="text-xs text-[#a5b4fc]">{booking.driverId.phone}</p>
                   </div>
                 </div>
               </motion.div>
             )}
-
-            {/* Status Updates */}
             {booking.status === 'pending' && (
-              <motion.div
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="bg-yellow-50 rounded-2xl p-5 text-center"
-              >
+              <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2 }} className="bg-[#fef9c3] rounded-2xl p-5 text-center">
                 <span className="text-3xl">⏳</span>
-                <p className="text-yellow-700 font-medium mt-2">Finding Driver...</p>
-                <p className="text-yellow-600 text-xs mt-1">Please wait while we match you</p>
+                <p className="text-[#b45309] font-bold mt-2">Finding Driver...</p>
+                <p className="text-[#b45309] text-xs mt-1">Please wait while we match you</p>
               </motion.div>
             )}
-
             {booking.status === 'accepted' && (
-              <div className="bg-blue-50 rounded-2xl p-5 text-center">
+              <div className="bg-[#dbeafe] rounded-2xl p-5 text-center">
                 <span className="text-3xl">🚗</span>
-                <p className="text-blue-700 font-medium mt-2">Driver is on the way!</p>
+                <p className="text-black font-bold mt-2">Driver is on the way!</p>
               </div>
             )}
-
             {booking.status === 'in-progress' && (
-              <div className="bg-green-50 rounded-2xl p-5 text-center">
+              <div className="bg-[#bbf7d0] rounded-2xl p-5 text-center">
                 <span className="text-3xl">🛣️</span>
-                <p className="text-green-700 font-medium mt-2">Ride in progress</p>
+                <p className="text-black font-bold mt-2">Ride in progress</p>
               </div>
             )}
-
-            {booking.status === 'completed' && (
-              <div className="space-y-3">
-                <div className="bg-green-50 rounded-2xl p-5 text-center">
+            <div className="space-y-3">
+              {booking.status === 'completed' && (
+                <div className="bg-[#bbf7d0] rounded-2xl p-5 text-center animate-bounce">
                   <span className="text-3xl">✅</span>
-                  <p className="text-green-700 font-medium mt-2">Ride Completed!</p>
+                  <p className="text-black font-bold mt-2">Ride Completed!</p>
                 </div>
-                {!booking.rating && (
-                  <button
-                    onClick={() => navigate(`/rate/${booking._id}`)}
-                    className="w-full bg-gray-900 text-white py-3 rounded-xl font-medium cursor-pointer"
-                  >
-                    ⭐ Rate Your Ride
-                  </button>
-                )}
-              </div>
-            )}
-
+              )}
+              <button
+                onClick={() => generateInvoicePDF(booking)}
+                className="w-full bg-gradient-to-r from-[#7c3aed] to-[#19e68c] text-white py-3 rounded-xl font-bold shadow-lg cursor-pointer animate-pulse"
+              >
+                🧾 Download PDF Invoice
+              </button>
+              {booking.status === 'completed' && !booking.rating && (
+                <button
+                  onClick={() => navigate(`/rate/${booking._id}`)}
+                  className="w-full bg-[#23283a] text-white py-3 rounded-xl font-medium cursor-pointer border border-[#7c3aed]"
+                >
+                  ⭐ Rate Your Ride
+                </button>
+              )}
+            </div>
             {!['completed', 'cancelled'].includes(booking.status) && (
               <button
                 onClick={handleCancel}

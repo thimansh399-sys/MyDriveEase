@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/api': 'http://localhost:5001',
+      '/api': 'http://localhost:5010',
       '/socket.io': {
-        target: 'http://localhost:5001',
+        target: 'http://localhost:5010',
         ws: true,
       },
     },

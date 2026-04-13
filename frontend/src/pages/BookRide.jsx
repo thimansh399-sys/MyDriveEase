@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+// removed duplicate import of motion
+import { CheckCircle, MapPin, Calendar, CreditCard, KeyRound } from 'lucide-react';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
@@ -229,9 +232,9 @@ function BookRide() {
                   <div className="space-y-5">
                     <div>
                       <label className="block text-base font-semibold text-[#19e68c] mb-1">📍 Pickup Location</label>
-                      <input
+                      <PlacesAutocomplete
                         value={pickup.address}
-                        onChange={(e) => setPickup({ ...pickup, address: e.target.value, lat: null, lng: null })}
+                        onPlaceSelected={(place) => setPickup(place)}
                         placeholder="Enter pickup address"
                         className="w-full px-5 py-3 border border-[#19e68c] rounded-xl outline-none focus:ring-2 focus:ring-[#19e68c] bg-[#222c37] text-white placeholder-gray-400"
                       />
@@ -245,10 +248,10 @@ function BookRide() {
                       )}
                     </div>
                     <div>
-                      <label className="block text-base font-semibold text-[#19e68c] mb-1">🏁 Drop Location</label>
-                      <input
+                      <label className="block text-base font-semibold text-[#19e68c] mb-1">🏁 Drop Location <span className='text-red-500'>*</span></label>
+                      <PlacesAutocomplete
                         value={drop.address}
-                        onChange={(e) => setDrop({ ...drop, address: e.target.value, lat: null, lng: null })}
+                        onPlaceSelected={(place) => setDrop(place)}
                         placeholder="Enter drop-off address"
                         className="w-full px-5 py-3 border border-[#19e68c] rounded-xl outline-none focus:ring-2 focus:ring-[#19e68c] bg-[#222c37] text-white placeholder-gray-400"
                       />
@@ -256,7 +259,7 @@ function BookRide() {
                     <motion.button
                       whileTap={{ scale: 0.98 }}
                       onClick={handleSearch}
-                      disabled={loading || !pickup.address || !drop.address}
+                      disabled={loading || !pickup.address || !drop.address || !drop.lat || !drop.lng}
                       className="w-full bg-[#19e68c] text-black py-3 rounded-xl font-bold shadow-lg disabled:opacity-50 cursor-pointer text-lg hover:bg-[#16a34a]"
                     >
                       {loading ? 'Calculating Route...' : 'Find Route & Fare'}
@@ -364,63 +367,9 @@ function BookRide() {
                 </motion.div>
               )}
 
-              {step === 3 && booking && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`${glass} rounded-3xl p-8 text-center`}
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 200 }}
-                    className="w-24 h-24 bg-gradient-to-br from-[#16a34a]/20 to-[#0ea5e9]/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
-                  >
-                    <span className="text-5xl">✅</span>
-                  </motion.div>
-                  <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Booking Confirmed!</h2>
-                  <p className="text-gray-500 text-base mb-6">
-                    {booking.driverId
-                      ? 'Your driver has been notified and will accept shortly.'
-                      : 'We are finding the best driver for you.'}
-                  </p>
-                  <div className="bg-gradient-to-br from-[#e0f7fa] to-[#e8f5e9] rounded-xl p-5 mb-6 text-left border border-[#e5e5e5]">
-                    <div className="grid grid-cols-2 gap-3 text-base">
-                      <div>
-                        <span className="text-gray-500">Booking ID</span>
-                        <p className="font-mono text-xs text-gray-900">{booking._id}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Status</span>
-                        <p className="text-yellow-600 font-bold capitalize">{booking.status}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Distance</span>
-                        <p className="text-gray-900 font-semibold">{booking.distance} km</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Total Fare</span>
-                        <p className="text-gray-900 font-extrabold">{formatCurrency(booking.fare.total)}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => navigate(`/track/${booking._id}`)}
-                      className="flex-1 bg-gradient-to-r from-[#16a34a] to-[#0ea5e9] text-white py-3 rounded-xl text-base font-bold shadow-lg cursor-pointer"
-                    >
-                      🗺️ Track Ride
-                    </button>
-                    <button
-                      onClick={() => navigate('/my-rides')}
-                      className="flex-1 border border-gray-300 py-3 rounded-xl text-base font-semibold cursor-pointer bg-white/70 hover:bg-gray-100"
-                    >
-                      My Rides
-                    </button>
-                  </div>
-                </motion.div>
+              {step === 3 && booking && (
+                <BookingConfirmedModal booking={booking} navigate={navigate} setStep={setStep} />
               )}
             </AnimatePresence>
           </div>
@@ -431,3 +380,79 @@ function BookRide() {
 }
 
 export default BookRide;
+
+// Inline BookingConfirmedModal with updated style and black text
+function BookingConfirmedModal({ booking, navigate, setStep }) {
+  const [show, setShow] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShow(false);
+      navigate(`/track/${booking._id}`);
+    }, 60000); // 1 minute
+    return () => clearTimeout(timer);
+  }, [booking, navigate]);
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white w-[380px] rounded-2xl shadow-2xl p-6"
+      >
+        {/* Header */}
+        <div className="text-center mb-4">
+          <CheckCircle className="text-green-500 mx-auto mb-2" size={40} />
+          <h2 className="text-2xl font-bold text-gray-800">Booking Confirmed</h2>
+          <p className="text-sm text-gray-500">Your ride is being arranged 🚗</p>
+        </div>
+
+        {/* Status */}
+        <div className="bg-yellow-100 text-yellow-700 text-sm font-semibold px-4 py-2 rounded-lg text-center mb-4">
+          {booking.status === 'pending' || booking.status === 'driver-assignment-pending' ? 'Driver assignment pending' : booking.status ? booking.status.replace(/-/g, ' ') : 'Status Unknown'}
+        </div>
+
+        {/* Details */}
+        <div className="space-y-3 text-sm text-gray-700 mb-4">
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className="text-green-500" />
+            <span><b>Pickup:</b> {booking.pickup?.address || 'Not Available'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className="text-red-500" />
+            <span><b>Drop:</b> {booking.drop?.address || 'Not Available'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar size={16} className="text-blue-500" />
+            <span><b>Date & Time:</b> {booking.createdAt ? new Date(booking.createdAt).toLocaleString() : 'N/A'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CreditCard size={16} className="text-purple-500" />
+            <span><b>Fare:</b> ₹{booking.fare?.total ?? '0'}</span>
+          </div>
+          {booking.otp && (
+            <div className="flex items-center gap-2">
+              <KeyRound size={16} className="text-orange-500" />
+              <span><b>OTP:</b> <span className="font-mono text-lg text-black bg-yellow-100 px-3 py-1 rounded-lg tracking-widest">{booking.otp}</span></span>
+            </div>
+          )}
+        </div>
+
+        {/* Button */}
+        <button
+          className="mt-4 w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded-xl font-semibold hover:scale-105 transition"
+          onClick={() => {
+            setShow(false);
+            navigate(`/track/${booking._id}`);
+          }}
+        >
+          🚗 Navigate with Google Maps
+        </button>
+
+        {/* Footer */}
+        <p className="text-xs text-center text-gray-400 mt-3">
+          Booking ID: {booking._id || 'XXXXXX'}
+        </p>
+      </motion.div>
+    </div>
+  );
+}

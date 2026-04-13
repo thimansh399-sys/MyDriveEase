@@ -126,14 +126,12 @@ const MyRides = () => {
                 )}
 
                 <div className="flex gap-2 mt-3">
-                  {['pending', 'accepted', 'in-progress'].includes(ride.status) && (
-                    <Link
-                      to={`/track/${ride._id}`}
-                      className="text-xs bg-green-500 text-black px-4 py-2 rounded-lg font-medium"
-                    >
-                      Track Ride
-                    </Link>
-                  )}
+                  <Link
+                    to={`/track/${ride._id}`}
+                    className="text-xs bg-green-500 text-black px-4 py-2 rounded-lg font-medium animate-pulse"
+                  >
+                    Track & Invoice
+                  </Link>
                   {ride.status === 'completed' && !ride.rating && (
                     <Link
                       to={`/rate/${ride._id}`}
