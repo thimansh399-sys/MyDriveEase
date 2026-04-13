@@ -71,21 +71,6 @@ function MapView() {
 
   return (
     <div className="bg-background dark:bg-[#06121C] text-black dark:text-white">
-      {/* 🔝 NAVBAR ...existing code... */}
-      <nav className="flex justify-between items-center px-10 py-4 bg-white dark:bg-[#081a28] border-b border-border">
-        <h1 className="text-xl font-extrabold text-primary">🚗 DriveEase</h1>
-        <div className="flex gap-6 text-sm">
-          <a href="#">Home</a>
-          <a href="#">Drivers</a>
-          <a href="#">Plans</a>
-          <a href="#">Insurance</a>
-          <a href="#">Bookings</a>
-        </div>
-        <div className="flex gap-3">
-          <button className="border border-primary px-4 py-2 rounded-2xl font-extrabold text-primary bg-transparent hover:bg-primary hover:text-white transition-colors">Login</button>
-          <button className="bg-primary px-4 py-2 rounded-2xl text-black font-extrabold shadow hover:bg-green-400 transition-colors">Sign Up</button>
-        </div>
-      </nav>
 
       {/* 🚗 HERO */}
       <section className="grid grid-cols-1 md:grid-cols-2 px-4 md:px-16 py-16 gap-10 items-center">
