@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +19,13 @@ const Login = () => {
     setLoading(true);
     try {
       const userData = await login(phone, password, role);
-      navigate(userData.role === 'driver' ? '/driver/dashboard' : '/');
+      // Redirect to intended page after login, or default
+      let from = location.state?.from?.pathname;
+      if (userData.role === 'driver') {
+        navigate('/driver/dashboard', { replace: true, state: {} });
+      } else {
+        navigate('/', { replace: true, state: {} });
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {

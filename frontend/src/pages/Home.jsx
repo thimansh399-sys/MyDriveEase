@@ -5,21 +5,21 @@ import MapView from "../components/MapView";
 
 export default function Home() {
   return (
-    <div className="bg-[#06121C] text-white">
+    <div className="bg-background dark:bg-[#06121C] text-black dark:text-white">
 
 
 
       {/* 🚗 HERO SECTION (Clean Centered Modern) */}
       <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden px-4">
         {/* Green Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f2d19] via-green-900/80 to-black"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-primary/10 to-green-100 dark:from-[#0f2d19] dark:via-green-900/80 dark:to-black"></div>
         {/* Content */}
         <div className="relative z-10 w-full flex flex-col items-center justify-center">
-          <h1 className="text-6xl md:text-7xl font-extrabold mb-6 text-white drop-shadow-lg text-center">
-            Welcome to DriveEase
+          <h1 className="text-6xl md:text-7xl font-extrabold mb-6 text-black dark:text-white drop-shadow-lg text-center">
+            Welcome to <span className="text-primary">DriveEase</span>
           </h1>
-          <h2 className="text-3xl md:text-4xl font-bold text-green-400 mb-8 text-center">
-            Book your ride in seconds
+          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-8 text-center">
+            Book your trusted driver in seconds
           </h2>
           <div className="w-full max-w-md mb-10">
             <BookingBox />
@@ -28,35 +28,35 @@ export default function Home() {
       </section>
 
       {/* 📊 STATS SECTION */}
-      <section className="flex flex-wrap justify-around py-10 text-center bg-[#081a28]">
+      <section className="flex flex-wrap justify-around py-10 text-center bg-card dark:bg-[#081a28] rounded-2xl mx-4 md:mx-16 -mt-24 shadow-lg border border-border">
         <div>
-          <h2 className="text-3xl md:text-4xl text-green-400 font-bold">10K+</h2>
-          <p className="text-gray-200">Happy Customers</p>
+          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">10K+</h2>
+          <p className="text-gray-700 dark:text-gray-200">Happy Customers</p>
         </div>
         <div>
-          <h2 className="text-3xl md:text-4xl text-green-400 font-bold">500+</h2>
-          <p className="text-gray-200">Verified Drivers</p>
+          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">500+</h2>
+          <p className="text-gray-700 dark:text-gray-200">Verified Drivers</p>
         </div>
         <div>
-          <h2 className="text-3xl md:text-4xl text-green-400 font-bold">24/7</h2>
-          <p className="text-gray-200">Customer Support</p>
+          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">24/7</h2>
+          <p className="text-gray-700 dark:text-gray-200">Customer Support</p>
         </div>
         <div>
-          <h2 className="text-3xl md:text-4xl text-green-400 font-bold">50+</h2>
-          <p className="text-gray-200">Cities Covered</p>
+          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">50+</h2>
+          <p className="text-gray-700 dark:text-gray-200">Cities Covered</p>
         </div>
       </section>
 
       {/* 🧭 HOW IT WORKS */}
       <section className="px-6 md:px-16 py-16 text-center">
-        <h2 className="text-3xl md:text-4xl mb-10 font-bold">How It Works</h2>
+        <h2 className="text-3xl md:text-4xl mb-10 font-extrabold text-primary">How It Works</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
+          <div className="bg-card dark:bg-[#0d2233] p-8 rounded-2xl shadow-lg flex flex-col items-center border border-border">
             <span className="text-4xl mb-3">📍</span>
-            <h3 className="font-bold mb-2">Choose Pickup & Destination</h3>
-            <p className="text-gray-300">Enter your location and where you want to go</p>
+            <h3 className="font-extrabold mb-2">Choose Pickup & Destination</h3>
+            <p className="text-gray-700 dark:text-gray-300">Enter your location and where you want to go</p>
           </div>
-          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
+          <div className="bg-card dark:bg-[#0d2233] p-8 rounded-2xl shadow-lg flex flex-col items-center border border-border">
             <span className="text-4xl mb-3">👨‍✈️</span>
             <h3 className="font-bold mb-2">Select Driver or Plan</h3>
             <p className="text-gray-300">Choose from available drivers or plans</p>

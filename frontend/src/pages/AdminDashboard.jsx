@@ -165,23 +165,23 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1019] py-8 px-2 sm:px-8">
+    <div className="min-h-screen bg-background dark:bg-[#0a1019] py-8 px-2 sm:px-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-white text-center flex-1">Admin Dashboard</h1>
+        <h1 className="text-3xl font-extrabold text-primary text-center flex-1">Admin Dashboard</h1>
         <div className="relative ml-4" ref={notifRef}>
           <button onClick={() => setNotifOpen((v) => !v)} className="focus:outline-none">
             <BellIcon hasNew={notifications.some(n => !n.read)} />
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-[#111827] border border-[#19e68c] rounded-2xl shadow-xl z-50">
+            <div className="absolute right-0 mt-2 w-80 bg-card dark:bg-[#111827] border border-border rounded-2xl shadow-xl z-50">
               <div className="p-4">
-                <h3 className="text-lg font-bold text-[#19e68c] mb-2">Notifications</h3>
+                <h3 className="text-lg font-extrabold text-primary mb-2">Notifications</h3>
                 {notifications.length === 0 ? (
                   <div className="text-gray-400">No notifications</div>
                 ) : (
                   <ul className="divide-y divide-[#222c37] max-h-64 overflow-y-auto">
                     {notifications.map((n, i) => (
-                      <li key={i} className={`py-2 text-white ${!n.read ? 'font-bold' : ''}`}>
+                      <li key={i} className={`py-2 text-black dark:text-white ${!n.read ? 'font-extrabold' : ''}`}>
                         <span>{n.message}</span>
                         <span className="block text-xs text-gray-400 mt-1">{new Date(n.date).toLocaleString()}</span>
                       </li>
@@ -193,7 +193,7 @@ const AdminDashboard = () => {
           )}
         </div>
       </div>
-      {error && <div className="text-red-400 text-center mb-4">{error}</div>}
+      {error && <div className="text-red-400 text-center mb-4 font-extrabold">{error}</div>}
       <div className="flex justify-end mb-4">
         <button
           className="px-4 py-2 rounded-xl bg-[#19e68c] text-black font-bold mr-2"
@@ -275,23 +275,23 @@ const AdminDashboard = () => {
         {statLabels.map((stat, i) => (
           <motion.div
             key={stat.key}
-            className="bg-[#111827] rounded-2xl p-4 flex flex-col items-center shadow border border-[#19e68c] cursor-pointer hover:scale-105 transition-transform"
+            className="bg-card dark:bg-[#111827] rounded-2xl p-4 flex flex-col items-center shadow border border-border cursor-pointer hover:scale-105 transition-transform"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07 }}
             onClick={() => openModal(stat.key)}
           >
-            <span className="text-[#19e68c] text-lg font-semibold mb-1">{stat.label}</span>
-            <span className="text-2xl font-bold text-white">{stats[stat.key] ?? 0}</span>
+            <span className="text-primary text-lg font-extrabold mb-1">{stat.label}</span>
+            <span className="text-2xl font-extrabold text-black dark:text-white">{stats[stat.key] ?? 0}</span>
           </motion.div>
         ))}
       </div>
-      <div className="bg-[#111827] rounded-2xl p-6 shadow border border-[#19e68c] max-w-2xl mx-auto">
+      <div className="bg-card dark:bg-[#111827] rounded-2xl p-6 shadow border border-border max-w-2xl mx-auto">
         <div className="flex gap-4 mb-4 justify-center">
           {chartLabels.map((chart) => (
             <button
               key={chart.key}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#19e68c] ${selectedChart === chart.key ? 'bg-[#19e68c] text-black' : 'bg-[#222c37] text-[#19e68c]'}`}
+              className={`px-4 py-2 rounded-2xl font-extrabold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary ${selectedChart === chart.key ? 'bg-primary text-black' : 'bg-white dark:bg-[#222c37] text-primary dark:text-primary border border-border hover:bg-primary/10'}`}
               onClick={() => setSelectedChart(chart.key)}
             >
               {chart.label}
@@ -304,7 +304,7 @@ const AdminDashboard = () => {
             {(charts[selectedChart] || []).map((val, idx) => (
               <div key={idx} className="flex flex-col items-center w-full">
                 <div
-                  className="bg-[#19e68c] rounded-t-lg"
+                  className="bg-primary rounded-t-lg"
                   style={{ height: `${val * 2}px`, minWidth: '18px', width: '100%' }}
                   title={val}
                 ></div>

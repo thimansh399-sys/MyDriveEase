@@ -21,10 +21,12 @@ import PaymentGateway from './pages/PaymentGateway';
 import Plans from './pages/Plans';
 import Insurance from './pages/Insurance';
 
+import { useLocation } from 'react-router-dom';
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
   if (role && user.role !== role) return <Navigate to="/" />;
   return children;
 };

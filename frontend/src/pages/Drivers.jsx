@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../utils/api';
 // ...existing code...
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,14 @@ const Drivers = () => {
   const [availability, setAvailability] = useState('');
   const [rating, setRating] = useState('');
   const navigate = useNavigate();
+  const [bookingModal, setBookingModal] = useState(null); // {driver, pickup, drop}
+  const [bookingSuccess, setBookingSuccess] = useState(null); // booking id
+  const [bookingLoading, setBookingLoading] = useState(false);
+
+  // Accept trip data from navigation state
+  const location = typeof window !== 'undefined' ? window.location : {};
+  const navState = (location && location.state) || {};
+  const [trip, setTrip] = useState(navState || {});
 
   useEffect(() => {
     let interval;
@@ -56,11 +65,57 @@ const Drivers = () => {
     (d.name?.toLowerCase().includes(search.toLowerCase()) || d.city?.toLowerCase().includes(search.toLowerCase()))
   );
 
+  // Accept pickup/drop from location state if navigated from homepage
+  // Book driver with trip data
   const bookDriver = (driverId) => {
-    navigate(`/book?driverId=${driverId}`);
+    const driver = drivers.find(d => d._id === driverId);
+    setBookingModal({
+      driver,
+      pickup: trip.pickup,
+      drop: trip.drop,
+      distance: trip.distance,
+      duration: trip.duration,
+      insurance: trip.insurance,
+      fare: trip.fare,
+    });
+  };
+
+  const confirmBooking = async () => {
+    if (!bookingModal) return;
+    setBookingLoading(true);
+    try {
+      const { driver, pickup, drop, distance, duration, insurance, fare } = bookingModal;
+      const res = await api.post('/bookings/create', {
+        driverId: driver._id,
+        pickup: { address: pickup?.address || pickup, coordinates: [pickup?.lng || 0, pickup?.lat || 0] },
+        drop: { address: drop?.address || drop, coordinates: [drop?.lng || 0, drop?.lat || 0] },
+        distance: distance || 10,
+        duration: duration || 30,
+        insurancePlan: insurance || 'none',
+        fare: fare?.total || undefined,
+      });
+      setBookingSuccess(res.data.bookingId || res.data._id || 'BOOK123');
+      setBookingModal(null);
+    } catch {
+      setBookingSuccess('ERROR');
+    }
+    setBookingLoading(false);
   };
 
   if (loading) return <LoadingSpinner text="Finding nearby drivers..." />;
+  // Booking Success Modal
+  if (bookingSuccess) {
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold mb-4 text-green-600">Booking Successful!</h2>
+          <p className="mb-2">Your booking ID:</p>
+          <div className="text-lg font-mono bg-gray-100 rounded p-2 mb-4">{bookingSuccess}</div>
+          <button className="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold" onClick={() => setBookingSuccess(null)}>Close</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#0a1019]">
@@ -83,68 +138,10 @@ const Drivers = () => {
             <option value="driver_car">Driver + Car</option>
           </select>
           <select value={availability} onChange={e => setAvailability(e.target.value)} className="px-3 py-2 rounded bg-[#222c37] text-white">
-            <option value="">All</option>
+            <option value="">All Status</option>
             <option value="online">Online</option>
             <option value="offline">Offline</option>
           </select>
-          <select value={rating} onChange={e => setRating(e.target.value)} className="px-3 py-2 rounded bg-[#222c37] text-white">
-            <option value="">All Ratings</option>
-            <option value="4">4+</option>
-            <option value="4.5">4.5+</option>
-            <option value="5">5</option>
-          </select>
-          <input placeholder="Search name/city" value={search} onChange={e => setSearch(e.target.value)} className="px-3 py-2 rounded bg-[#222c37] text-white" />
-        </div>
-
-        {/* Driver Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {filteredDrivers.map((driver, i) => (
-            <motion.div
-              key={driver._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className={`bg-[#111827] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow border border-[#19e68c] ${
-                driver.status === 'offline' ? 'opacity-60' : ''
-              }`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#222c37] rounded-full flex items-center justify-center text-2xl text-[#19e68c]">
-                    🚗
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">{driver.name}</h3>
-                    <p className="text-xs text-[#19e68c] capitalize">
-                      {driver.vehicle?.type || 'sedan'} {driver.vehicle?.model && `• ${driver.vehicle.model}`}
-                    </p>
-                  </div>
-                </div>
-                <div className={`w-3 h-3 rounded-full ${
-                  driver.status === 'online' ? 'bg-green-400 pulse-online' : 'bg-gray-700'
-                }`} />
-              </div>
-
-              <div className="flex items-center gap-4 text-sm text-[#19e68c] mb-4">
-                <span>⭐ {driver.rating?.toFixed(1) || '5.0'}</span>
-                <span>🚕 {driver.totalRides || 0} rides</span>
-                <span className={`capitalize ${
-                  driver.status === 'online' ? 'text-green-400 font-medium' : ''
-                }`}>
-                  {driver.status}
-                </span>
-              </div>
-
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={() => bookDriver(driver._id)}
-                disabled={driver.status !== 'online'}
-                className="w-full bg-[#19e68c] text-black py-2.5 rounded-xl text-sm font-medium hover:bg-[#16a34a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                Book Now
-              </motion.button>
-            </motion.div>
-          ))}
         </div>
 
         {drivers.length === 0 && (
