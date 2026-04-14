@@ -60,6 +60,10 @@ const bookingSchema = new mongoose.Schema({
     default: '',
     maxlength: 500,
   },
+  otp: {
+    type: String,
+    default: null,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Booking', bookingSchema);
