@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
@@ -6,6 +8,56 @@ const { JWT_SECRET } = require('../config');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
+
+
+
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { phone, password, role } = req.body;
+    if (!phone || !password) {
+      return res.status(400).json({ message: 'Phone and password are required' });
+    }
+
+
+    let userDoc;
+    let userRole;
+    if (role === 'driver') {
+      userDoc = await Driver.findOne({ phone }).select('+password');
+      userRole = 'driver';
+    } else {
+      userDoc = await User.findOne({ phone }).select('+password');
+      userRole = 'user';
+    }
+
+    if (!userDoc) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Compare password (bcryptjs)
+    const bcrypt = require('bcryptjs');
+    const isMatch = await bcrypt.compare(password, userDoc.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = signToken(userDoc._id, userRole);
+    const profile = {
+      id: userDoc._id,
+      name: userDoc.name,
+      phone: userDoc.phone,
+      role: userRole,
+    };
+    if (userRole === 'driver') {
+      profile.status = userDoc.status;
+      profile.vehicle = userDoc.vehicle;
+    }
+    return res.json({ token, user: profile });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 const signToken = (id, role) => {
   return jwt.sign({ id, role }, JWT_SECRET, { expiresIn: '7d' });

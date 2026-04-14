@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
+
 const Login = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -90,6 +91,7 @@ const Login = () => {
                 className="w-full px-4 py-3 border border-[#223040] bg-[#16202b] text-white rounded-xl focus:ring-2 focus:ring-[#19e68c] focus:border-[#19e68c] outline-none transition-all placeholder-gray-400"
                 required
               />
+              
             </div>
             <motion.button
               whileTap={{ scale: 0.98 }}

@@ -5,6 +5,19 @@ const { auth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET /api/bookings/available — all available rides for drivers
+router.get('/available', auth, requireRole('driver'), async (req, res) => {
+  try {
+    // Only show bookings that are pending and not assigned to any driver
+    const bookings = await Booking.find({ status: 'pending', driverId: null })
+      .populate('userId', 'name phone')
+      .sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 const BASE_FARE = 50;
 const PER_KM_RATE = 12;
 const INSURANCE_RATES = { none: 0, mini: 10, premium: 20 };

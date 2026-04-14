@@ -8,7 +8,7 @@ export default function ProfileDashboard() {
     name: '',
     phone: '',
     avatar: '',
-    vehicleType: '',
+    locality: '',
     vehicleModel: '',
     vehiclePlate: '',
   });
