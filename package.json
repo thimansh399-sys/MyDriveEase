@@ -3,6 +3,12 @@
     "@react-google-maps/api": "^2.20.8",
     "dotenv": "^17.4.1",
     "lucide-react": "^1.8.0",
-    "mongoose": "^9.4.1"
+    "@expo/cli": "^55.0.24",
+    "@expo/metro-runtime": "^55.0.9",
+    "expo": "^55.0.15",
+    "mongoose": "^9.4.1",
+    "react-dom": "^19.1.0",
+    "react-native-safe-area-context": "^5.7.0",
+    "react-native-web": "^0.21.2"
   }
 }
