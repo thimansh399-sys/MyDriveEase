@@ -1,3 +1,4 @@
+
 const express = require('express');
 const Booking = require('../models/Booking');
 const Driver = require('../models/Driver');
@@ -22,6 +23,24 @@ const BASE_FARE = 50;
 const PER_KM_RATE = 12;
 const INSURANCE_RATES = { none: 0, mini: 10, premium: 20 };
 
+// GET /api/bookings/available
+router.get('/available', auth, requireRole('driver'), async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      status: 'pending',
+      $or: [
+        { driverId: null },
+        { driverId: req.user.id }
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json(bookings);
+  } catch (err) {
+    console.error('Available bookings error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // POST /api/bookings/create
 router.post('/create', auth, requireRole('user'), async (req, res) => {
   try {
@@ -31,9 +50,13 @@ router.post('/create', auth, requireRole('user'), async (req, res) => {
       return res.status(400).json({ message: 'Pickup, drop, and distance are required' });
     }
 
-    const distanceCost = parseFloat((distance * PER_KM_RATE).toFixed(2));
-    const insurance = INSURANCE_RATES[insurancePlan] || 0;
-    const total = parseFloat((BASE_FARE + distanceCost + insurance).toFixed(2));
+
+    // New fare calculation
+    const baseFare = 40;
+    const perKm = 10;
+    const perMin = 2;
+    const time = duration || 0;
+    const fareTotal = parseFloat((baseFare + (distance * perKm) + (time * perMin)).toFixed(2));
 
     const bookingData = {
       userId: req.user.id,
@@ -46,13 +69,12 @@ router.post('/create', auth, requireRole('user'), async (req, res) => {
         coordinates: drop.coordinates,
       },
       distance,
-      duration: duration || 0,
+      duration: time,
       fare: {
-        baseFare: BASE_FARE,
-        distanceCost,
-        insurance,
-        insurancePlan,
-        total,
+        baseFare,
+        perKm,
+        perMin,
+        total: fareTotal,
       },
       status: 'pending',
     };
