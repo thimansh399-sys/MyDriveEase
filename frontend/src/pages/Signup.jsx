@@ -39,9 +39,9 @@ const Signup = () => {
         };
       }
       await signup(data);
-      navigate('/login');
+      navigate(form.role === 'driver' ? '/driver/login' : '/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
+      setError(err.response?.data?.message || err.message || 'Signup failed');
     } finally {
       setLoading(false);
     }

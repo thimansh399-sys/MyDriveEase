@@ -20,7 +20,7 @@ const DriverLogin = () => {
       const userData = await login(phone, password, 'driver');
       navigate('/driver/dashboard', { replace: true, state: {} });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
