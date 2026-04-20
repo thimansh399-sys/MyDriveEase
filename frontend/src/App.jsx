@@ -20,6 +20,8 @@ import PaymentGateway from './pages/PaymentGateway';
 import Plans from './pages/Plans';
 import Insurance from './pages/Insurance';
 
+import DriverLogin from './pages/DriverLogin';
+
 import { useLocation } from 'react-router-dom';
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
@@ -43,6 +45,9 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+
+      {/* Dedicated Driver Login Route */}
+      <Route path="/driver/login" element={<GuestRoute><DriverLogin /></GuestRoute>} />
 
       {/* User Routes */}
       <Route path="/drivers" element={<ProtectedRoute role="user"><Drivers /></ProtectedRoute>} />
