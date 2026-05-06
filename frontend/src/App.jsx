@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import NotificationList from './components/NotificationList';
@@ -19,10 +19,13 @@ import ProfileDashboard from './pages/ProfileDashboard';
 import PaymentGateway from './pages/PaymentGateway';
 import Plans from './pages/Plans';
 import Insurance from './pages/Insurance';
+import Faqs from './pages/Faqs';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 import DriverLogin from './pages/DriverLogin';
 
-import { useLocation } from 'react-router-dom';
+
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -53,7 +56,11 @@ function AppRoutes() {
       <Route path="/drivers" element={<ProtectedRoute role="user"><Drivers /></ProtectedRoute>} />
       <Route path="/book" element={<ProtectedRoute role="user"><BookRide /></ProtectedRoute>} />
       <Route path="/plans" element={<Plans />} />
+      <Route path="/faqs" element={<Faqs />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/insurance" element={<Insurance />} />
+
       <Route path="/track/:bookingId" element={<ProtectedRoute role="user"><TrackRide /></ProtectedRoute>} />
       <Route path="/my-rides" element={<ProtectedRoute role="user"><MyRides /></ProtectedRoute>} />
       <Route path="/rate/:bookingId" element={<ProtectedRoute role="user"><RateRide /></ProtectedRoute>} />

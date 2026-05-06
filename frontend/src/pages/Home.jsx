@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import BookingBox from "../components/BookingBox";
 import MapView from "../components/MapView";
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 export default function Home() {
   const [mapLocations, setMapLocations] = useState({ pickup: null, drop: null });
@@ -78,54 +80,127 @@ export default function Home() {
 
 
       {/* 🚗 HERO SECTION (Clean Centered Modern) */}
-      <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden px-4">
-        {/* Green Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#101924] via-[#18222f]/80 to-[#1a3a2c] opacity-95"></div>
-        {/* Content */}
-        <div className="relative z-10 w-full flex flex-col items-center justify-center">
-          <h1 className="text-6xl md:text-7xl font-extrabold mb-6 text-white drop-shadow-lg text-center">
-            Welcome to <span className="text-primary">DriveEase</span>
-          </h1>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-8 text-center">
-            Book your trusted driver in seconds
-          </h2>
-          <div className="w-full max-w-5xl flex flex-col md:flex-row gap-8 items-stretch justify-center mb-10">
-            <div className="flex-1 flex items-center justify-center">
-              <BookingBox onLocationsChange={setMapLocations} />
-            </div>
-            <div className="flex-1 min-h-[320px] max-h-[400px] rounded-2xl overflow-hidden shadow-lg border border-primary bg-black flex items-center justify-center">
-              <MapView
-                center={mapCenter}
-                zoom={markers.length ? 10 : 5}
-                markers={markers}
-                route={route}
-                fitBounds={fitBounds}
-                className="h-full w-full"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+     <section
+  className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden"
+  style={{
+    backgroundImage: `
+      linear-gradient(rgba(2,6,23,0.6), rgba(2,6,23,0.7)),
+      url('/images/driver.png')
+    `,
+    backgroundSize: "100%",
+    backgroundPosition: "center",
+  }}
+>
+  {/* 🌌 BACKGROUND */}
+ 
+   
+  {/* ✨ GLOW EFFECTS */}
+  <div className="absolute top-20 left-20 w-72 h-72 bg-green-500/20 blur-[120px] rounded-full"></div>
+  <div className="absolute bottom-20 right-20 w-72 h-72 bg-blue-500/20 blur-[120px] rounded-full"></div>
 
-      {/* 📊 STATS SECTION */}
-      <section className="relative z-30 flex flex-wrap justify-around py-10 text-center bg-card rounded-2xl mx-4 md:mx-16 mt-20 shadow-lg border border-border">
-        <div>
-          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">10K+</h2>
-          <p className="text-gray-700 dark:text-gray-200">Happy Customers</p>
-        </div>
-        <div>
-          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">500+</h2>
-          <p className="text-gray-700 dark:text-gray-200">Verified Drivers</p>
-        </div>
-        <div>
-          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">24/7</h2>
-          <p className="text-gray-700 dark:text-gray-200">Customer Support</p>
-        </div>
-        <div>
-          <h2 className="text-3xl md:text-4xl text-primary font-extrabold">50+</h2>
-          <p className="text-gray-700 dark:text-gray-200">Cities Covered</p>
-        </div>
-      </section>
+  {/* MAIN CONTENT */}
+  <div className="relative z-10 max-w-7xl w-full grid md:grid-cols-2 gap-12 items-center">
+
+    {/* 🔹 LEFT SIDE */}
+    <div>
+
+      <p className="text-green-400 mb-4 font-semibold">
+        ✔ Safe. Reliable. Always On Time.
+      </p>
+
+      <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
+        Reliable Rides, <br />
+        <span className="text-green-400">Trusted Drivers</span>
+      </h1>
+
+      <p className="text-gray-300 mt-6 text-lg">
+        Hire professional drivers for local and outstation travel.
+        Safe, verified, and trusted by thousands.
+      </p>
+
+      {/* BUTTONS */}
+      <div className="flex flex-wrap gap-4 mt-8">
+        <button className="bg-green-500 hover:bg-green-600 px-6 py-3 rounded-xl font-semibold shadow-lg transition">
+         Get Started
+        </button>
+
+        <button className="border border-gray-500 hover:border-green-400 px-6 py-3 rounded-xl transition">
+          Explore Pricing
+        </button>
+      </div>
+
+      {/* FEATURES */}
+     <div className="flex flex-wrap gap-4 mt-10">
+
+  {[
+    "✔ Verified Drivers",
+    "⚡Quick Scheduling",
+    "🎧24/7 Support",
+    "💰Transparent Pricing"
+  ].map((item, index) => (
+    <div
+      key={index}
+      className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-sm text-gray-200 shadow-lg hover:scale-105 hover:bg-green-500/30 transition-all duration-300"
+    >
+      {item}
+    </div>
+  ))}
+
+</div>
+    </div>
+
+    {/* 🔹 RIGHT SIDE (BOOKING BOX) */}
+    <div className="flex justify-center md:justify-end w-full">
+
+      <div className="bg-[#0b1a2a]/70 backdrop-blur-xl p-4 rounded-2xl border border-green-500/20 shadow-2xl w-full max-w-md">
+
+        <h2 className="text-lg font-bold mb-3 text-white text-center">
+         Schedule Your Ride
+        </h2>
+
+        {/* 🔥 YOUR REAL COMPONENT */}
+        <BookingBox onLocationsChange={setMapLocations} />
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+      <div className="w-full px-6 mt-10">
+  <div className="relative overflow-hidden rounded-2xl p-6 
+                  bg-gradient-to-r from-green-900/40 to-emerald-700/30 
+                  border border-green-500/20 
+                  shadow-lg backdrop-blur-md flex flex-col md:flex-row items-center justify-between">
+
+    {/* Left Content */}
+    <div className="flex items-center gap-4">
+      <div className="bg-green-500/20 p-4 rounded-full">
+        <span className="text-3xl">%</span>
+      </div>
+
+      <div>
+        <p className="text-green-400 text-sm font-semibold">
+          Limited Time Offer!
+        </p>
+        <h2 className="text-white text-xl md:text-2xl font-bold">
+          Get 20% OFF on your first booking 🎉
+        </h2>
+      </div>
+    </div>
+
+    {/* Right Coupon Box */}
+    <div className="mt-4 md:mt-0 flex items-center gap-3">
+      <div className="border border-dashed border-green-400 px-5 py-2 rounded-lg text-green-300 font-semibold tracking-wider">
+        DRIVE20
+      </div>
+
+      <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition">
+        Apply
+      </button>
+    </div>
+  </div>
+</div>
 
       {/* 🧭 HOW IT WORKS */}
       <section className="px-6 md:px-16 py-16 text-center">
@@ -133,13 +208,15 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
             <span className="text-4xl mb-3">📍</span>
-            <h3 className="font-extrabold mb-2 text-">Choose Pickup & Destination</h3>
-            <p className="text-gray-20">Enter your location and where you want to go</p>
+            <h3 className="font-extrabold mb-2 text-white">Choose Pickup & Destination</h3>
+            <p className="text-gray-200">Enter your location and where you want to go</p>
+
           </div>
          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
             <span className="text-4xl mb-3">👨‍✈️</span>
             <h3 className="font-bold mb-2 text-white">Select Driver or Plan</h3>
-            <p className="text-gray-">Choose from available drivers or plans</p>
+            <p className="text-gray-300">Choose from available drivers or plans</p>
+
           </div>
           <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
             <span className="text-4xl mb-3">✅</span>
@@ -197,26 +274,32 @@ export default function Home() {
       {/* 💰 PRICING SECTION */}
       <section className="px-6 md:px-16 py-16 text-center bg-[#081a28]">
         <h2 className="text-3xl md:text-4xl mb-10 font-bold">Simple & Transparent Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
-            <h3 className="font-bold mb-2">Basic Plan</h3>
-            <span className="text-2xl mb-2">₹199/hour</span>
-            <p className="text-gray-300 mb-2">Best for short rides</p>
-          </div>
-          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
-            <h3 className="font-bold mb-2">Standard Plan</h3>
-            <span className="text-2xl mb-2">₹399/hour</span>
-            <p className="text-gray-300 mb-2">Perfect for daily use</p>
-          </div>
-          <div className="bg-[#0d2233] p-8 rounded-xl shadow-lg flex flex-col items-center">
-            <h3 className="font-bold mb-2">Premium Plan</h3>
-            <span className="text-2xl mb-2">₹699/hour</span>
-            <p className="text-gray-300 mb-2">For luxury & long rides</p>
-          </div>
-        </div>
-        <button className="bg-green-500 px-8 py-3 rounded-xl text-black font-bold text-lg shadow-lg">
-          View All Plans
-        </button>
+        <div className="grid md:grid-cols-3 gap-6">
+
+  {/* Hourly */}
+  <div className="p-6 border rounded-xl">
+    <h3>Quick Ride</h3>
+    <p className="text-2xl font-bold text-green-400">
+      ₹199<span className="text-sm">/hour</span>
+    </p>
+    <p className="text-gray-400">Min 4 hours</p>
+  </div>
+
+  {/* Full Day - Highlight */}
+  <div className="p-6 border-2 border-green-500 rounded-xl bg-[#0a1a2a]">
+    <h3>Full Day</h3>
+    <p className="text-2xl font-bold text-green-400">₹999/day</p>
+    <p className="text-gray-400">Up to 8 hours • Most Popular</p>
+  </div>
+
+  {/* Premium */}
+  <div className="p-6 border rounded-xl">
+    <h3>Premium Drive</h3>
+    <p className="text-2xl font-bold text-green-400">₹1299/day</p>
+    <p className="text-gray-400">For long & luxury rides</p>
+  </div>
+
+</div>
       </section>
 
       {/* ⭐ REVIEWS SECTION */}
@@ -239,50 +322,96 @@ export default function Home() {
         </div>
       </section>
 
+
+
       {/* 📱 CTA SECTION */}
-      <section className="text-center py-16 bg-[#081a28]">
-        <h2 className="text-4xl mb-4 font-bold">Ready to Ride?</h2>
-        <p className="mb-6 text-gray-300">Join 10,000+ happy customers using DriveEase every day.</p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
-          <button className="bg-green-500 px-8 py-3 rounded-xl text-black font-bold text-lg shadow-lg">Get Started</button>
-          <button className="bg-[#0d2233] px-8 py-3 rounded-xl text-green-400 font-bold text-lg shadow-lg border border-green-400">Browse Drivers</button>
-        </div>
-      </section>
+      <div className="bg-[#06121C] p-8 rounded-xl text-center">
+  <h2 className="text-2xl font-bold mb-2 text-white">
+Your Ride Awaits!
+  </h2>
+
+  <p className="text-gray-400 mb-6">
+Join 50,000+ satisfied customers. Instant booking with verified drivers – safe, fast, and affordable.
+  </p>
+
+  <div className="flex justify-center gap-4">
+    <Link
+      to="/book"
+      className="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg font-semibold"
+    >
+Book Now
+    </Link>
+
+    <Link
+      to="/drivers"
+      className="border border-gray-500 hover:border-green-400 px-6 py-2 rounded-lg"
+    >
+Find Drivers
+    </Link>
+  </div>
+</div>
 
       {/* 👨‍💼 ABOUT US */}
       <section className="px-6 md:px-16 py-16 text-center">
-        <h2 className="text-3xl md:text-4xl mb-4 font-bold">About DriveEase</h2>
-        <p className="max-w-2xl mx-auto text-gray-300 mb-4">
-          DriveEase is India’s first personal driver network, built to make travel safer, more convenient, and affordable.
+        <h2 className="text-3xl md:text-4xl mb-8 font-bold text-white">About DriveEase</h2>
+        <p className="max-w-3xl mx-auto text-xl text-gray-300 mb-6 leading-relaxed">
+          DriveEase is not just a service — it's a movement towards smarter mobility. 
+          We connect users with a network of trusted, verified drivers across India, making personal travel safer, simpler, and more accessible.
         </p>
-        <p className="max-w-2xl mx-auto text-gray-300">
-          We connect users with verified professional drivers across multiple cities, ensuring a reliable and stress-free travel experience every time.
+        <p className="max-w-3xl mx-auto text-xl text-gray-300 leading-relaxed">
+          With a focus on reliability, transparency, and user-first experience, we are shaping the future of driver-on-demand services.
         </p>
       </section>
 
       {/* 🔚 FOOTER */}
       <footer className="grid grid-cols-1 md:grid-cols-4 gap-10 px-6 md:px-16 py-10 bg-[#06121C] text-sm">
         <div>
-          <h3 className="text-green-400 font-bold text-lg mb-2">DriveEase</h3>
-          <p>India’s #1 Personal Driver Service</p>
+          <h3 className="text-green-400 font-extrabold text-2xl mb-2">
+            DriveEase 🚗
+          </h3>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Your personal driver, on demand. <br />
+            Safe rides • Verified drivers • Pan India service
+          </p>
         </div>
+
         <div>
           <h3 className="font-bold mb-2">Quick Links</h3>
-          {/* If you want links here, use <a> tags or remove these lines to avoid duplicate tabs */}
+          <a href="/" className="block hover:text-green-400">Home</a>
+          <a href="/drivers" className="block hover:text-green-400">Drivers</a>
+          <a href="/book" className="block hover:text-green-400">Book Ride</a>
+          <a href="/plans" className="block hover:text-green-400">Plans</a>
         </div>
+
         <div>
           <h3 className="font-bold mb-2">Support</h3>
-          <p>FAQs</p>
-          <p>Terms & Conditions</p>
-          <p>Privacy Policy</p>
+          <a href="/faqs" className="block hover:text-green-400">FAQs</a>
+          <a href="/terms" className="block hover:text-green-400">Terms & Conditions</a>
+          <a href="/privacy" className="block hover:text-green-400">Privacy Policy</a>
         </div>
+
         <div>
           <h3 className="font-bold mb-2">Follow Us</h3>
-          <p>Instagram</p>
-          <p>WhatsApp</p>
-          <p>LinkedIn</p>
-          <p className="mt-2">Contact: <span className="text-green-400">+91-XXXXXXXXXX</span></p>
-          <p>Email: <span className="text-green-400">support@driveease.in</span></p>
+          <a
+  href="https://www.instagram.com/mydriveease"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-2 mb-2 hover:text-pink-400"
+>
+  <FaInstagram />
+  @mydriveease
+</a>
+          <a
+  href="https://wa.me/917836887228"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-2 mb-2 hover:text-green-400"
+>
+  <FaWhatsapp />
+  Chat on WhatsApp
+</a>
+          <p className="mt-2">Contact: <span className="text-green-400">+91-78368 87228</span></p>
+          <p>Email: <span className="text-green-400">driveeasesupport@gmail.com</span></p>
         </div>
       </footer>
     </div>
