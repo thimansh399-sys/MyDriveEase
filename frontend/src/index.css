@@ -78,3 +78,46 @@ body {
   50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
 }
 .pulse-online { animation: pulse-green 2s infinite; }
+.custom-time-picker .react-time-picker__wrapper {
+  border: none !important;
+  background: transparent !important;
+}
+
+.custom-time-picker input {
+  color: white !important;
+  font-size: 18px !important;
+  outline: none !important;
+}
+
+.custom-time-picker button {
+  color: #19e68c !important;
+}
+
+.custom-time-picker {
+  width: 100%;
+}
+/* TIME PICKER */
+
+.custom-time-picker {
+  width: 100%;
+}
+
+.custom-time-picker .react-time-picker__wrapper {
+  border: none !important;
+}
+
+.custom-time-picker input {
+  background: transparent !important;
+  color: white !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 16px;
+}
+
+.custom-time-picker button {
+  color: #22c55e !important;
+}
+
+.custom-time-picker .react-time-picker__inputGroup {
+  color: white !important;
+}

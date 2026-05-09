@@ -9,7 +9,7 @@ import Signup from './pages/Signup';
 import Drivers from './pages/Drivers';
 import BookRide from './pages/BookRide';
 import TrackRide from './pages/TrackRide';
-import MyRides from './pages/MyRides';
+import MyRides from './pages/MyTrips';
 import RateRide from './pages/RateRide';
 import LiveMap from './pages/LiveMap';
 import DriverDashboard from './pages/DriverDashboard';

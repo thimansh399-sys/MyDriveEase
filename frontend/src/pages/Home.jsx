@@ -402,7 +402,7 @@ Find Drivers
   @mydriveease
 </a>
           <a
-  href="https://wa.me/917836887228"
+  href="https://wa.me/917007515654"
   target="_blank"
   rel="noopener noreferrer"
   className="flex items-center gap-2 mb-2 hover:text-green-400"
@@ -410,7 +410,7 @@ Find Drivers
   <FaWhatsapp />
   Chat on WhatsApp
 </a>
-          <p className="mt-2">Contact: <span className="text-green-400">+91-78368 87228</span></p>
+          <p className="mt-2">Contact: <span className="text-green-400">+91-7007515654</span></p>
           <p>Email: <span className="text-green-400">driveeasesupport@gmail.com</span></p>
         </div>
       </footer>
