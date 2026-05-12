@@ -1,12 +1,8 @@
-# TODO — Fleet/Tour-Travel Proper Flow
+# TODO
 
-- [ ] Backend: Update `backend/models/Fleet.js` to include `status`, `totalCars`, `availableCars`, and `cars[]` fields (keep existing fields).
-- [x] Backend: Add Fleet accept endpoint in `backend/routes/bookings.js` => `POST /api/bookings/fleet/:id/accept`.
-
-- [x] Backend: Add fleet socket room join in `backend/socket/index.js` => `join-fleet` and auto-join for `role=fleet`.
-
-- [ ] Frontend: Add pages `FleetLogin.jsx`, `FleetRegister.jsx`, `FleetDashboard.jsx`.
-- [ ] Frontend: Add Navbar item for Fleet Panel.
-- [ ] Frontend: Wire socket notifications in FleetDashboard (listen `new-driver-booking` and render list).
-- [ ] Test: Customer `/hire-driver` notifies all online fleets; fleet accept assigns booking.
+## Module script MIME type fix (Vercel)
+- [x] Confirm Vite build outputs correct module JS under `dist/assets/*`.
+- [x] Find the likely cause: `frontend/vercel.json` rewrite sends ALL paths (including asset/module requests) to `/index.html`, which is served as `text/html`.
+- [ ] Update `frontend/vercel.json` to avoid rewriting asset/module requests.
+- [ ] Redeploy to Vercel and hard refresh.
 
