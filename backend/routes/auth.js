@@ -78,87 +78,99 @@ router.post('/login', async (req, res) => {
 
 
 
-// ================= SIGNUP =================
 router.post('/signup', async (req, res) => {
+
   try {
 
-    const { name, email, phone, password, role } = req.body;
+    const {
+      name,
+      phone,
+      password,
+      role,
+      aadhaarNumber,
+      licenseNumber,
+    } = req.body;
 
-    if (!name || !phone || !password) {
-      return res.status(400).json({
-        message: 'All fields required',
-      });
-    }
+    // USER SIGNUP
+    if (role === 'user') {
 
-    if (role === 'driver') {
+      const existingUser = await User.findOne({ phone });
 
-      const exists = await Driver.findOne({ phone });
+      if (existingUser) {
 
-      if (exists) {
-        return res.status(400).json({
-          message: 'Driver already exists',
-        });
-      }
-
-      const driver = await Driver.create({
-        name,
-        email,
-        phone,
-        password,
-      });
-
-      const token = signToken(driver._id, 'driver');
-
-      return res.status(201).json({
-        token,
-        user: {
-          id: driver._id,
-          name: driver.name,
-          email: driver.email,
-          phone: driver.phone,
-          role: 'driver',
-        },
-      });
-
-    } else {
-
-      const exists = await User.findOne({ phone });
-
-      if (exists) {
         return res.status(400).json({
           message: 'User already exists',
         });
+
       }
 
       const user = await User.create({
         name,
-        email,
         phone,
         password,
       });
 
-      const token = signToken(user._id, 'user');
-
       return res.status(201).json({
-        token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          role: 'user',
-        },
+        success: true,
+        user,
       });
+
     }
 
+    // DRIVER SIGNUP
+    if (role === 'driver') {
+
+      const existingDriver =
+        await Driver.findOne({ phone });
+
+      if (existingDriver) {
+
+        return res.status(400).json({
+          message: 'Driver already exists',
+        });
+
+      }
+
+      const driver = await Driver.create({
+
+        name,
+        phone,
+        password,
+
+        aadhaarNumber,
+        licenseNumber,
+
+        role: 'driver',
+
+      });
+
+      return res.status(201).json({
+
+        success: true,
+
+        driver,
+
+      });
+
+    }
+
+    return res.status(400).json({
+      message: 'Invalid role',
+    });
+
   } catch (err) {
-    console.log(err);
+
+    console.log(
+      'SIGNUP ERROR =>',
+      err
+    );
+
     res.status(500).json({
       message: 'Server error',
     });
+
   }
 });
-
 
 
 // ================= UPDATE PROFILE =================

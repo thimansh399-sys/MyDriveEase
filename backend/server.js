@@ -67,6 +67,7 @@ app.use('/api/', limiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/drivers', require('./routes/drivers'));
 
 
 // ✅ HEALTH CHECK

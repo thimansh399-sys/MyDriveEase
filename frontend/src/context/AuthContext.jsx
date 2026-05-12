@@ -27,16 +27,30 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (phone, password, role) => {
-    const res = await api.post('/auth/login', { phone, password, role });
-    const { token, user: userData } = res.data;
 
-    // Auto logout other role
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    connectSocket(token);
-    return userData;
-  };
+  const res = await api.post('/auth/login', {
+
+    phone,
+    password,
+    role,
+
+  });
+
+  localStorage.setItem(
+    'token',
+    res.data.token
+  );
+
+  localStorage.setItem(
+    'user',
+    JSON.stringify(res.data.user)
+  );
+
+  setUser(res.data.user);
+
+  return res.data.user;
+
+};
 
   // Signup should NOT auto-login
   const signup = async (data) => {

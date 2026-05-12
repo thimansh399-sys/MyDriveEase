@@ -11,14 +11,24 @@ const RateRide = () => {
   const [feedback, setFeedback] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async () => {
+    setError('');
     if (rating === 0) return;
+
     setLoading(true);
     try {
-      await api.post(`/bookings/${bookingId}/rate`, { rating, feedback });
+      const res = await api.post(`/bookings/${bookingId}/rate`, { rating, feedback });
+      if (res?.data?.success === false) {
+        setError(res?.data?.message || 'Rating submit failed');
+        return;
+      }
       setSubmitted(true);
     } catch (err) {
+      // api error kabhi-kabhi 4xx/5xx deta hai; message show karne ke liye
+      const msg = err?.response?.data?.message || err?.message || 'Rating submit failed';
+      setError(msg);
       console.error('Rating error:', err);
     } finally {
       setLoading(false);
@@ -27,11 +37,11 @@ const RateRide = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-[calc(100vh-64px)] bg-gray-50 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-64px)] bg-[#06121C] flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-2xl p-8 shadow-lg text-center max-w-md"
+          className="bg-[#0d2233] border border-[#122c3f] rounded-2xl p-8 shadow-lg text-center max-w-md text-white"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -41,7 +51,7 @@ const RateRide = () => {
           >
             🎉
           </motion.div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Thank You!</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Thank You!</h2>
           <p className="text-gray-500 text-sm mb-6">Your feedback helps us improve.</p>
           <button
             onClick={() => navigate('/my-rides')}
@@ -55,15 +65,15 @@ const RateRide = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-64px)] bg-[#06121C] flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl p-8 shadow-lg max-w-md w-full"
+        className="bg-[#0d2233] border border-[#122c3f] rounded-2xl p-8 shadow-lg max-w-md w-full text-white"
       >
         <div className="text-center mb-6">
           <span className="text-4xl">⭐</span>
-          <h2 className="text-xl font-bold text-gray-900 mt-2">Rate Your Ride</h2>
+          <h2 className="text-xl font-bold text-white mt-2">Rate Your Ride</h2>
           <p className="text-gray-500 text-sm">How was your experience?</p>
         </div>
 
@@ -83,16 +93,22 @@ const RateRide = () => {
         </div>
 
         {rating > 0 && (
-          <p className="text-center text-sm text-gray-500 mb-4">
+          <p className="text-center text-sm text-green-300 mb-4">
             {['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][rating]}
           </p>
+        )}
+
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-900/40 bg-red-950/30 px-4 py-3 text-red-200 text-sm">
+            {error}
+          </div>
         )}
 
         <textarea
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
           placeholder="Share your feedback (optional)"
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 resize-none h-24 mb-4"
+          className="w-full px-4 py-3 border border-[#122c3f] rounded-xl outline-none focus:ring-2 focus:ring-[#19e68c] bg-[#06121C] text-white resize-none h-24 mb-4"
           maxLength={500}
         />
 

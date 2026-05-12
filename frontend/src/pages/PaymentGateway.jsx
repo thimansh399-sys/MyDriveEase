@@ -5,10 +5,10 @@ import { QRCodeSVG } from 'qrcode.react';
 
 const PAYMENT_DETAILS = {
   name: 'HIMANSHU SINGH',
-  account: '7836887228',
+  account: '9014030768',
   ifsc: 'KKBK0005033',
   bank: 'KOTAK BANK',
-  upi: '7836887228@okaxis',
+  upi: '7007515654@kotak',
 };
 const upiUrl = `upi://pay?pa=${PAYMENT_DETAILS.upi}&pn=${encodeURIComponent(PAYMENT_DETAILS.name)}&cu=INR`;
 

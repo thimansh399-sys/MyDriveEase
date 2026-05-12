@@ -63,12 +63,22 @@ const Drivers = () => {
     return () => clearInterval(interval);
   }, [state, city, pincode, driverType, availability, rating]);
 
-  const filteredDrivers = drivers.filter(d =>
-    (d.name?.toLowerCase().includes(search.toLowerCase()) || d.city?.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredDrivers = drivers.filter(d => {
+    const matchesSearch =
+      d.name?.toLowerCase().includes(search.toLowerCase()) ||
+      d.city?.toLowerCase().includes(search.toLowerCase());
+
+    // Requirement: Our Drivers tab me sirf Online drivers show hon.
+    const isOnline = d.status === 'online';
+
+    return matchesSearch && isOnline;
+  });
+
 
   // Accept pickup/drop from location state if navigated from homepage
   // Book driver with trip data
+  // NOTE: Booking modal is no longer opened from the "Book This Driver" button.
+  // Kept for backward compatibility if used elsewhere.
   const bookDriver = (driverId) => {
     const driver = drivers.find(d => d._id === driverId);
     setBookingModal({
@@ -189,9 +199,10 @@ const Drivers = () => {
           </div>
         )}
 
-        {/* Driver List */}
+        {/* Driver List (online only) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {drivers.map(driver => (
+          {filteredDrivers.map(driver => (
+
             <div key={driver._id} className="rounded-2xl bg-gradient-to-br from-black via-[#0a1019] to-green-900 p-7 shadow-xl border-2 border-green-400 flex flex-col gap-3 hover:scale-105 transition-transform duration-200">
               <div className="flex items-center gap-4 mb-2">
                 <span className={`w-4 h-4 rounded-full border-2 ${driver.status === 'online' ? 'bg-green-400 border-green-300 animate-pulse' : 'bg-gray-400 border-gray-300'} shadow`}></span>
@@ -210,7 +221,7 @@ const Drivers = () => {
                 <span className="text-xs text-gray-400 ml-auto">{driver.phone}</span>
               </div>
               <button
-                onClick={() => bookDriver(driver._id)}
+                onClick={() => navigate('/hire-driver')}
                 className="mt-3 bg-green-400 text-black font-bold py-2 rounded-xl hover:bg-green-300 transition-colors"
               >
                 Book This Driver

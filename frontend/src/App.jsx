@@ -12,18 +12,26 @@ import TrackRide from './pages/TrackRide';
 import MyRides from './pages/MyTrips';
 import RateRide from './pages/RateRide';
 import LiveMap from './pages/LiveMap';
-import DriverDashboard from './pages/DriverDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import DriverRides from './pages/DriverRides';
 import ProfileDashboard from './pages/ProfileDashboard';
+
 import PaymentGateway from './pages/PaymentGateway';
 import Plans from './pages/Plans';
 import Insurance from './pages/Insurance';
 import Faqs from './pages/Faqs';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import HireDriver from "./pages/HireDriver";
 
 import DriverLogin from './pages/DriverLogin';
+import DriverProfilePage from './pages/DriverProfile';
+
+import DriverLayout from './pages/driver/DriverLayout';
+import DriverDashboardPage from './pages/driver/DriverDashboardPage';
+import DriverRideRequestsPage from './pages/driver/DriverRideRequestsPage';
+import DriverMyRidesPage from './pages/driver/DriverMyRidesPage';
+import DriverEarningsPage from './pages/driver/DriverEarningsPage';
+
 
 
 const ProtectedRoute = ({ children, role }) => {
@@ -46,6 +54,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/hire-driver" element={<HireDriver />} />
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
 
@@ -70,12 +79,25 @@ function AppRoutes() {
       <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
 
       {/* Driver Routes */}
+      <Route
+        path="/driver"
+        element={
+          <ProtectedRoute role="driver">
+            <DriverLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<DriverDashboardPage />} />
+        <Route path="ride-requests" element={<DriverRideRequestsPage />} />
+        <Route path="my-rides" element={<DriverMyRidesPage />} />
+        <Route path="earnings" element={<DriverEarningsPage />} />
+        <Route path="profile" element={<DriverProfilePage />} />
+      </Route>
 
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
 
-      <Route path="/driver/dashboard" element={<ProtectedRoute role="driver"><DriverDashboard /></ProtectedRoute>} />
-      <Route path="/driver/rides" element={<ProtectedRoute role="driver"><DriverRides /></ProtectedRoute>} />
+
 
 
       <Route path="*" element={<Navigate to="/" />} />

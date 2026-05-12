@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import api from "../utils/api";
+import { useNavigate } from "react-router-dom";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -30,8 +31,7 @@ export default function BookingBox() {
   // DATE & TIME
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState("10:00");
-
-  const [showDriverModal, setShowDriverModal] = useState(false);
+  const navigate = useNavigate();
 
   // SEARCH LOCATION FUNCTION
   const searchLocation = async (query, type) => {
@@ -129,7 +129,7 @@ export default function BookingBox() {
         time: selectedTime,
       });
 
-      alert(`Booking Confirmed 🚗 Fare: ₹${fare}`);
+      navigate("/bookings/success");
 
     } catch (err) {
 
@@ -416,11 +416,12 @@ export default function BookingBox() {
         {/* HIRE DRIVER */}
 
         <button
-          onClick={() => setShowDriverModal(true)}
-          className="mt-3 w-full border border-green-500 text-green-400 py-3 rounded-2xl hover:bg-green-500 hover:text-black transition-all duration-300"
-        >
-          Hire Driver Only
-        </button>
+            type="button"
+            onClick={() => navigate("/hire-driver")}
+            className="mt-3 w-full border border-green-500 text-green-400 py-3 rounded-2xl hover:bg-green-500 hover:text-black transition-all duration-300"
+       >
+           Hire Driver Only
+       </button>
 
         <p className="text-xs text-gray-400 mt-4 text-center">
           ✔ No hidden charges • ✔ Free cancellation

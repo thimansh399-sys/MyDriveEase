@@ -1,377 +1,576 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  Car,
+  MapPin,
+  Wallet,
+  Clock3,
+  Star,
+  Power,
+  Navigation,
+  Phone,
+  Bell,
+  IndianRupee,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
-import api from '../utils/api';
-import { getSocket } from '../utils/socket';
 import { useAuth } from '../context/AuthContext';
-import MapView from '../components/MapView';
-import { getUserLocation, formatCurrency } from '../utils/helpers';
-import RideHistoryList from '../components/RideHistoryList';
+import api from '../utils/api';
 
-const EMERGENCY_NUMBER = '100'; // Change to your real helpline
-const DriverDashboard = () => {
+export default function DriverDashboard() {
   const { user, updateUser } = useAuth();
-  const [driverData, setDriverData] = useState(null);
+
   const [status, setStatus] = useState(user?.status || 'offline');
-  const [location, setLocation] = useState(null);
-  const [rideRequest, setRideRequest] = useState(null);
-  const [activeRide, setActiveRide] = useState(null);
-  const [rideHistory, setRideHistory] = useState([]);
+  const [driverData, setDriverData] = useState({});
   const [availableRides, setAvailableRides] = useState([]);
-  const [loadingRides, setLoadingRides] = useState(false);
-  const [activeRoute, setActiveRoute] = useState([]);
-  const locationInterval = useRef(null);
+  const [activeRide, setActiveRide] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDriverData();
-    fetchActiveRide();
-    fetchRideHistory();
-    fetchAvailableRides();
+    fetchDashboard();
   }, []);
 
-  // Poll for available rides every 30s if online
-  useEffect(() => {
-    if (status === 'online') {
-      const interval = setInterval(fetchAvailableRides, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [status]);
-    const fetchAvailableRides = async () => {
-      setLoadingRides(true);
-      try {
-        const res = await api.get('/bookings/available');
-        setAvailableRides(res.data);
-      } catch {
-        setAvailableRides([]);
-      } finally {
-        setLoadingRides(false);
-      }
-    };
-  // Fetch all completed and past rides for history
-  const fetchRideHistory = async () => {
+  const fetchDashboard = async () => {
     try {
-      const res = await api.get('/bookings/driver/my');
-      const history = res.data.filter((b) => b.status === 'completed' || b.status === 'cancelled');
-      setRideHistory(history);
-    } catch { /* ignore */ }
-  };
+      setLoading(true);
 
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+      const driverRes = await api.get('/drivers/profile');
+      setDriverData(driverRes.data);
 
-    socket.on('ride-request', (data) => {
-      setRideRequest(data);
-    });
+      const ridesRes = await api.get('/bookings/available');
+      setAvailableRides(ridesRes.data || []);
 
-    return () => {
-      socket.off('ride-request');
-    };
-  }, []);
+      const myRideRes = await api.get('/bookings/driver/my');
 
-  // Send location updates when online
-  useEffect(() => {
-    if (status === 'online' || status === 'on-ride') {
-      startLocationUpdates();
-    } else {
-      stopLocationUpdates();
-    }
-    return () => stopLocationUpdates();
-  }, [status]);
-
-  const startLocationUpdates = () => {
-    stopLocationUpdates();
-
-    const send = async () => {
-      try {
-        const loc = await getUserLocation();
-        setLocation(loc);
-        const socket = getSocket();
-        if (socket) {
-          socket.emit('driver-location-update', { lng: loc.lng, lat: loc.lat });
-        }
-      } catch { /* ignore */ }
-    };
-
-    send();
-    locationInterval.current = setInterval(send, 5000);
-  };
-
-  const stopLocationUpdates = () => {
-    if (locationInterval.current) {
-      clearInterval(locationInterval.current);
-      locationInterval.current = null;
-    }
-  };
-
-  const fetchDriverData = async () => {
-    try {
-      const res = await api.get('/drivers/me');
-      setDriverData(res.data);
-      setStatus(res.data.status);
-    } catch { /* ignore */ }
-  };
-
-  const fetchActiveRide = async () => {
-    try {
-      const res = await api.get('/bookings/driver/my');
-      const active = res.data.find((b) =>
-        ['accepted', 'in-progress'].includes(b.status)
+      const active = myRideRes.data.find((r) =>
+        ['accepted', 'in-progress'].includes(r.status)
       );
-      if (active) setActiveRide(active);
-    } catch { /* ignore */ }
+
+      if (active) {
+        setActiveRide(active);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleStatus = async () => {
     try {
       const res = await api.post('/drivers/toggle-status');
+
       setStatus(res.data.status);
-      updateUser({ status: res.data.status });
+
+      updateUser({
+        ...user,
+        status: res.data.status,
+      });
     } catch (err) {
-      console.error('Toggle error:', err);
+      console.log(err);
     }
   };
 
-  const acceptRide = async (bookingId) => {
+  const acceptRide = async (id) => {
     try {
-      const res = await api.post(`/bookings/${bookingId}/accept`);
+      const res = await api.post(`/bookings/${id}/accept`);
+
       setActiveRide(res.data);
-      setAvailableRides((prev) => prev.filter((r) => r._id !== bookingId));
+
+      setAvailableRides((prev) =>
+        prev.filter((ride) => ride._id !== id)
+      );
+
       setStatus('on-ride');
     } catch (err) {
-      console.error('Accept error:', err);
-      fetchAvailableRides();
+      console.log(err);
     }
-  };
-
-  const rejectRide = () => {
-    setRideRequest(null);
   };
 
   const startRide = async () => {
-    if (!activeRide) return;
     try {
-      const res = await api.post(`/bookings/${activeRide._id}/start`);
+      const res = await api.post(
+        `/bookings/${activeRide._id}/start`
+      );
+
       setActiveRide(res.data);
     } catch (err) {
-      console.error('Start error:', err);
+      console.log(err);
     }
   };
 
   const completeRide = async () => {
-    if (!activeRide) return;
     try {
-      await api.post(`/bookings/${activeRide._id}/complete`);
+      await api.post(
+        `/bookings/${activeRide._id}/complete`
+      );
+
       setActiveRide(null);
+
       setStatus('online');
-      fetchDriverData();
-      fetchRideHistory();
+
+      fetchDashboard();
     } catch (err) {
-      console.error('Complete error:', err);
+      console.log(err);
     }
   };
 
-  useEffect(() => {
-    const fetchActiveRoute = async () => {
-      if (!activeRide?.pickup?.coordinates || !activeRide?.drop?.coordinates) {
-        setActiveRoute([]);
-        return;
-      }
-      const [pLng, pLat] = activeRide.pickup.coordinates;
-      const [dLng, dLat] = activeRide.drop.coordinates;
-      try {
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${pLng},${pLat};${dLng},${dLat}?overview=full&geometries=geojson`
-        );
-        const data = await res.json();
-        if (data.routes?.length) {
-          const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-          setActiveRoute(coords);
-        } else {
-          setActiveRoute([]);
-        }
-      } catch {
-        setActiveRoute([]);
-      }
-    };
-
-    fetchActiveRoute();
-  }, [activeRide]);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0b0f14] flex items-center justify-center text-white text-2xl font-bold">
+        Loading Dashboard...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-black via-[#0a1019] to-green-900 px-2 py-6 text-white font-sans">
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, type: 'spring' }} className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
-          <motion.h1 initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ duration: 0.5 }} className="text-4xl md:text-5xl font-extrabold mb-2 text-green-400 tracking-tight">Welcome, Captain!</motion.h1>
-          <div className="ml-auto flex flex-col gap-2 items-end">
+    <div className="min-h-screen bg-[#0b0f14] text-white">
+      {/* TOP HEADER */}
+      <div className="sticky top-0 z-50 bg-[#111827]/95 backdrop-blur border-b border-[#1f2937]">
+        <div className="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold">
+              DriveEase Driver
+            </h1>
+
+            <p className="text-gray-400 text-sm mt-1">
+              Welcome back, {driverData?.name}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button className="w-11 h-11 rounded-full bg-[#1f2937] flex items-center justify-center hover:bg-[#2d3748] transition">
+              <Bell size={20} />
+            </button>
+
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => window.open(`tel:${EMERGENCY_NUMBER}`)}
-              className="px-5 py-2 rounded-xl bg-red-600 text-white font-bold shadow hover:bg-red-700 transition flex items-center gap-2 text-lg"
-              title="Emergency Helpline"
-            >
-              🚨 Emergency: {EMERGENCY_NUMBER}
-            </motion.button>
-            <span className="text-xs text-gray-300">Tap to call emergency helpline</span>
-          </div>
-        </div>
-        {/* Quick Links & Support */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <a href="/profile" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Profile</a>
-          <a href="/driver/rides" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Ride History</a>
-          <a href="mailto:support@driveease.com" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Support</a>
-          <a href="tel:1800123456" className="px-5 py-3 rounded-xl font-bold shadow transition text-lg text-black bg-gradient-to-r from-green-300 to-emerald-400 hover:brightness-110">Call Support</a>
-        </div>
-        {/* Status Toggle & Wallet */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
-          <div className="flex items-center gap-3">
-            <motion.span animate={{ scale: status === 'online' ? 1.2 : 1 }} className={`w-4 h-4 rounded-full ${status === 'online' ? 'bg-green-400' : status === 'on-ride' ? 'bg-yellow-400' : 'bg-gray-400'} border-2 border-white shadow`}></motion.span>
-            <span className="text-2xl font-bold text-white uppercase tracking-wide">{status === 'online' ? 'Online' : status === 'on-ride' ? 'On Ride' : 'Offline'}</span>
-            <motion.button
-              whileTap={{ scale: 0.98 }}
               onClick={toggleStatus}
-              disabled={status === 'on-ride'}
-              className={`ml-4 px-6 py-3 rounded-2xl text-lg font-extrabold shadow transition disabled:opacity-50 ${status === 'online' ? 'bg-black text-green-400 border-2 border-green-400 hover:bg-green-900' : 'bg-green-400 text-black hover:bg-green-500'}`}
+              className={`px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition ${
+                status === 'online'
+                  ? 'bg-green-500 text-black'
+                  : status === 'on-ride'
+                  ? 'bg-yellow-400 text-black'
+                  : 'bg-red-500 text-white'
+              }`}
             >
-              {status === 'online' ? 'Go Offline' : 'Go Online'}
+              <Power size={18} />
+
+              {status === 'online'
+                ? 'ONLINE'
+                : status === 'on-ride'
+                ? 'ON RIDE'
+                : 'OFFLINE'}
             </motion.button>
           </div>
-          <div className="ml-auto flex flex-col gap-2 items-end">
-            <div className="text-lg text-green-300">Wallet Balance</div>
-            <div className="text-3xl font-extrabold text-green-400">₹{driverData?.wallet || 0}</div>
-            <div className="flex gap-2 mt-2">
-              <input
-                type="number"
-                min="1"
-                placeholder="Withdraw amount"
-                className="px-4 py-3 rounded bg-[#222c37] text-white border border-green-400 w-36 text-lg"
-              />
-              <button className="px-5 py-3 rounded-2xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-bold shadow hover:brightness-110 transition text-lg">
-                Withdraw
-              </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-5 py-6">
+        {/* HERO CARD */}
+        <div className="bg-gradient-to-r from-[#16a34a] to-[#22c55e] rounded-3xl p-8 mb-8 text-black shadow-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div>
+              <h2 className="text-4xl font-extrabold mb-2">
+                Ready For Your Next Ride 🚖
+              </h2>
+
+              <p className="text-lg font-medium">
+                Stay online and accept rides instantly.
+              </p>
+            </div>
+
+            <div className="flex gap-4 flex-wrap">
+              <a
+                href="/driver/profile"
+                className="bg-black text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
+              >
+                Profile
+              </a>
+
+              <a
+                href="/driver/rides"
+                className="bg-white text-black px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
+              >
+                Ride History
+              </a>
             </div>
           </div>
-        </motion.div>
-        {/* Stats */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="flex flex-wrap gap-6 mb-8">
-          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
-            <div className="text-green-300 text-lg mb-1">Earnings Today</div>
-            <div className="text-3xl font-extrabold text-green-400">₹{driverData?.earningsToday || 0}</div>
+        </div>
+
+        {/* STATS */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+            <div className="flex items-center justify-between mb-4">
+              <Wallet className="text-green-400" size={28} />
+              <span className="text-sm text-gray-400">
+                Wallet
+              </span>
+            </div>
+
+            <h3 className="text-3xl font-extrabold">
+              ₹{driverData?.wallet || 0}
+            </h3>
           </div>
-          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
-            <div className="text-green-300 text-lg mb-1">Rides Today</div>
-            <div className="text-3xl font-extrabold text-green-400">{driverData?.ridesToday || 0}</div>
-          </div>
-          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
-            <div className="text-green-300 text-lg mb-1">Total Earnings</div>
-            <div className="text-3xl font-extrabold text-green-400">₹{driverData?.earnings || 0}</div>
-          </div>
-          <div className="bg-black/80 rounded-2xl p-8 flex flex-col items-center shadow border-2 border-green-400 min-w-[160px]">
-            <div className="text-green-300 text-lg mb-1">Total Rides</div>
-            <div className="text-3xl font-extrabold text-green-400">{driverData?.totalRides || 0}</div>
-          </div>
-        </motion.div>
-        {/* Map, Available Rides, Ride Logic, and Ride History */}
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Map */}
-          <div className="lg:col-span-1">
-            {location && (
-              <MapView
-                center={[location.lat, location.lng]}
-                zoom={15}
-                markers={[
-                  { lat: location.lat, lng: location.lng, popup: 'Driver' },
-                  ...(activeRide?.pickup?.coordinates
-                    ? [{ lat: activeRide.pickup.coordinates[1], lng: activeRide.pickup.coordinates[0], popup: 'Pickup' }]
-                    : []),
-                  ...(activeRide?.drop?.coordinates
-                    ? [{ lat: activeRide.drop.coordinates[1], lng: activeRide.drop.coordinates[0], popup: 'Drop-off' }]
-                    : []),
-                ]}
-                route={activeRoute}
-                className="h-[400px]"
+
+          <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+            <div className="flex items-center justify-between mb-4">
+              <IndianRupee
+                className="text-yellow-400"
+                size={28}
               />
-            )}
-            {!location && (
-              <div className="h-[400px] bg-black/60 rounded-2xl flex items-center justify-center">
-                <p className="text-green-400 text-xl">Go online to see your location</p>
-              </div>
-            )}
+
+              <span className="text-sm text-gray-400">
+                Earnings
+              </span>
+            </div>
+
+            <h3 className="text-3xl font-extrabold">
+              ₹{driverData?.earnings || 0}
+            </h3>
           </div>
-          {/* Available Rides */}
-          <div className="bg-black/80 rounded-2xl p-6 shadow border-2 border-green-400 max-h-[400px] overflow-y-auto lg:col-span-1">
-            <div className="font-extrabold mb-4 text-green-400 text-2xl">Available Rides</div>
-            {loadingRides && <div className="text-green-300">Loading...</div>}
-            {!loadingRides && availableRides.length === 0 && <div className="text-green-300">No available rides right now.</div>}
-            {availableRides.map((ride) => (
-              <div key={ride._id} className="mb-6 pb-6 border-b border-green-900 last:border-b-0 last:mb-0 last:pb-0">
-                <div className="text-white font-bold text-lg">{ride.pickup?.address} <span className="text-green-400">→</span> {ride.drop?.address}</div>
-                <div className="text-green-300 text-md">Fare: ₹{ride.fare?.total || ride.fare}</div>
-                <div className="text-green-300 text-md">Distance: {ride.distance} km</div>
-                <div className="text-green-300 text-md">Requested: {new Date(ride.createdAt).toLocaleString()}</div>
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => acceptRide(ride._id)} className="px-5 py-2 rounded-xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-bold shadow hover:brightness-110 transition text-md">Accept Ride</button>
-                  <button
-                    onClick={() => {
-                      const p = ride.pickup?.coordinates;
-                      const d = ride.drop?.coordinates;
-                      if (!p || !d) return;
-                      window.open(`https://www.google.com/maps/dir/?api=1&origin=${p[1]},${p[0]}&destination=${d[1]},${d[0]}&travelmode=driving`, '_blank');
-                    }}
-                    className="px-4 py-2 rounded-xl border border-green-300 text-green-200 hover:bg-green-900/50 transition"
-                  >
-                    Navigate
-                  </button>
-                </div>
-              </div>
-            ))}
+
+          <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+            <div className="flex items-center justify-between mb-4">
+              <Car className="text-blue-400" size={28} />
+
+              <span className="text-sm text-gray-400">
+                Total Rides
+              </span>
+            </div>
+
+            <h3 className="text-3xl font-extrabold">
+              {driverData?.totalRides || 0}
+            </h3>
           </div>
-          {/* Ride Request/Active Ride */}
-          <div className="space-y-4 lg:col-span-1">
-            {rideRequest && (
-              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400">
-                <div className="font-extrabold mb-2 text-green-400 text-2xl animate-pulse">New Ride Request</div>
-                <div className="mb-2 text-white text-lg">Pickup: <span className="text-green-300">{rideRequest.pickup?.address}</span></div>
-                <div className="mb-2 text-white text-lg">Drop: <span className="text-green-300">{rideRequest.drop?.address}</span></div>
-                <div className="flex gap-4 mt-4">
-                  <button onClick={() => acceptRide(rideRequest.bookingId)} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-extrabold shadow hover:brightness-110 transition text-lg">Accept</button>
-                  <button onClick={rejectRide} className="px-6 py-3 rounded-2xl bg-red-600 text-white font-extrabold shadow hover:bg-red-700 transition text-lg">Reject</button>
-                </div>
-              </motion.div>
-            )}
-            {activeRide && (
-              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400">
-                <div className="font-extrabold mb-2 text-green-400 text-2xl">Active Ride</div>
-                <div className="mb-2 text-white text-lg">Pickup: <span className="text-green-300">{activeRide.pickup?.address}</span></div>
-                <div className="mb-2 text-white text-lg">Drop: <span className="text-green-300">{activeRide.drop?.address}</span></div>
-                <div className="mb-2 text-white text-lg">Fare: <span className="text-green-300">₹{activeRide.fare?.total || activeRide.fare}</span></div>
-                <div className="mb-2 text-white text-lg">Status: <span className="text-green-300">{activeRide.status}</span></div>
-                <button
-                  onClick={() => {
-                    const p = activeRide.pickup?.coordinates;
-                    const d = activeRide.drop?.coordinates;
-                    if (!p || !d) return;
-                    window.open(`https://www.google.com/maps/dir/?api=1&origin=${p[1]},${p[0]}&destination=${d[1]},${d[0]}&travelmode=driving`, '_blank');
-                  }}
-                  className="px-5 py-2 rounded-xl border border-green-300 text-green-200 hover:bg-green-900/50 transition text-md"
-                >
-                  Open Navigation Map
-                </button>
-                <div className="flex gap-4 mt-4">
-                  {activeRide.status === 'accepted' && <button onClick={startRide} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-yellow-300 to-amber-400 text-black font-extrabold shadow hover:brightness-110 transition text-lg">Start Ride</button>}
-                  {activeRide.status === 'in-progress' && <button onClick={completeRide} className="px-6 py-3 rounded-2xl bg-gradient-to-r from-green-300 to-emerald-500 text-black font-extrabold shadow hover:brightness-110 transition text-lg">Complete Ride</button>}
-                </div>
-              </motion.div>
-            )}
-          </div>
-          {/* Ride History */}
-          <div className="bg-black/80 rounded-2xl p-8 shadow border-2 border-green-400 max-h-[400px] overflow-y-auto lg:col-span-1">
-            <div className="font-extrabold mb-4 text-green-400 text-2xl">Ride History</div>
-            <RideHistoryList rideHistory={rideHistory} />
+
+          <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+            <div className="flex items-center justify-between mb-4">
+              <Star className="text-orange-400" size={28} />
+
+              <span className="text-sm text-gray-400">
+                Rating
+              </span>
+            </div>
+
+            <h3 className="text-3xl font-extrabold">
+              {driverData?.rating || 5.0}
+            </h3>
           </div>
         </div>
-      </motion.div>
+
+        {/* MAIN GRID */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* LEFT */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* ACTIVE RIDE */}
+            {activeRide ? (
+              <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-extrabold">
+                    Active Ride
+                  </h2>
+
+                  <span className="bg-green-500 text-black px-4 py-2 rounded-full text-sm font-bold">
+                    {activeRide.status}
+                  </span>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="bg-[#1a2332] rounded-2xl p-5">
+                    <div className="flex gap-4">
+                      <div className="mt-1">
+                        <MapPin className="text-green-400" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-gray-400">
+                          Pickup Location
+                        </p>
+
+                        <h3 className="font-bold text-lg">
+                          {activeRide?.pickup?.address}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#1a2332] rounded-2xl p-5">
+                    <div className="flex gap-4">
+                      <div className="mt-1">
+                        <Navigation className="text-red-400" />
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-gray-400">
+                          Drop Location
+                        </p>
+
+                        <h3 className="font-bold text-lg">
+                          {activeRide?.drop?.address}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-[#1a2332] rounded-2xl p-5">
+                      <p className="text-sm text-gray-400 mb-1">
+                        Fare
+                      </p>
+
+                      <h3 className="text-3xl font-extrabold text-green-400">
+                        ₹
+                        {activeRide?.fare?.total ||
+                          activeRide?.fare}
+                      </h3>
+                    </div>
+
+                    <div className="bg-[#1a2332] rounded-2xl p-5">
+                      <p className="text-sm text-gray-400 mb-1">
+                        Payment
+                      </p>
+
+                      <h3 className="text-2xl font-bold">
+                        Cash
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 flex-wrap">
+                    {activeRide.status === 'accepted' && (
+                      <button
+                        onClick={startRide}
+                        className="bg-yellow-400 text-black px-6 py-4 rounded-2xl font-bold hover:scale-105 transition"
+                      >
+                        Start Ride
+                      </button>
+                    )}
+
+                    {activeRide.status ===
+                      'in-progress' && (
+                      <button
+                        onClick={completeRide}
+                        className="bg-green-500 text-black px-6 py-4 rounded-2xl font-bold hover:scale-105 transition"
+                      >
+                        Complete Ride
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() =>
+                        window.open(
+                          `https://maps.google.com`,
+                          '_blank'
+                        )
+                      }
+                      className="bg-[#1f2937] px-6 py-4 rounded-2xl font-bold hover:bg-[#2d3748] transition"
+                    >
+                      Open Navigation
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#111827] rounded-3xl p-10 border border-[#1f2937] text-center">
+                <Car
+                  size={60}
+                  className="mx-auto mb-5 text-green-400"
+                />
+
+                <h2 className="text-3xl font-extrabold mb-2">
+                  No Active Ride
+                </h2>
+
+                <p className="text-gray-400 text-lg">
+                  Go online to receive ride requests.
+                </p>
+              </div>
+            )}
+
+            {/* AVAILABLE RIDES */}
+            <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-extrabold">
+                  Available Rides
+                </h2>
+
+                <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-bold">
+                  {availableRides.length} rides
+                </span>
+              </div>
+
+              <div className="space-y-5">
+                {availableRides.length === 0 && (
+                  <div className="text-center py-12 text-gray-400">
+                    No rides available right now
+                  </div>
+                )}
+
+                {availableRides.map((ride) => (
+                  <div
+                    key={ride._id}
+                    className="bg-[#1a2332] rounded-3xl p-6 border border-[#243041]"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                      <div className="flex-1">
+                        <div className="space-y-4">
+                          <div className="flex gap-3">
+                            <MapPin className="text-green-400 mt-1" />
+
+                            <div>
+                              <p className="text-sm text-gray-400">
+                                Pickup
+                              </p>
+
+                              <h3 className="font-bold text-lg">
+                                {ride?.pickup?.address}
+                              </h3>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-3">
+                            <Navigation className="text-red-400 mt-1" />
+
+                            <div>
+                              <p className="text-sm text-gray-400">
+                                Drop
+                              </p>
+
+                              <h3 className="font-bold text-lg">
+                                {ride?.drop?.address}
+                              </h3>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="lg:w-[240px]">
+                        <div className="bg-[#111827] rounded-2xl p-5 mb-4">
+                          <div className="flex justify-between mb-2">
+                            <span className="text-gray-400">
+                              Fare
+                            </span>
+
+                            <span className="font-bold text-green-400 text-xl">
+                              ₹
+                              {ride?.fare?.total ||
+                                ride?.fare}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">
+                              Distance
+                            </span>
+
+                            <span className="font-bold">
+                              {ride?.distance || 0} km
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() =>
+                            acceptRide(ride._id)
+                          }
+                          className="w-full bg-green-500 text-black py-4 rounded-2xl font-extrabold hover:bg-green-400 transition"
+                        >
+                          Accept Ride
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDEBAR */}
+          <div className="space-y-6">
+            {/* DRIVER CARD */}
+            <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+              <div className="flex items-center gap-4 mb-6">
+                <img
+                  src={
+                    driverData?.avatar ||
+                    'https://ui-avatars.com/api/?name=Driver'
+                  }
+                  alt="driver"
+                  className="w-20 h-20 rounded-full object-cover border-4 border-green-400"
+                />
+
+                <div>
+                  <h2 className="text-2xl font-extrabold">
+                    {driverData?.name}
+                  </h2>
+
+                  <p className="text-gray-400">
+                    Professional Driver
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-[#1a2332] rounded-2xl p-4 flex justify-between">
+                  <span className="text-gray-400">
+                    Vehicle
+                  </span>
+
+                  <span className="font-bold">
+                    {driverData?.vehicle?.model ||
+                      'Innova'}
+                  </span>
+                </div>
+
+                <div className="bg-[#1a2332] rounded-2xl p-4 flex justify-between">
+                  <span className="text-gray-400">
+                    Number
+                  </span>
+
+                  <span className="font-bold">
+                    {driverData?.vehicle?.plate ||
+                      'UP32AB1234'}
+                  </span>
+                </div>
+
+                <div className="bg-[#1a2332] rounded-2xl p-4 flex justify-between">
+                  <span className="text-gray-400">
+                    Phone
+                  </span>
+
+                  <span className="font-bold">
+                    {driverData?.phone}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* SUPPORT */}
+            <div className="bg-[#111827] rounded-3xl p-6 border border-[#1f2937]">
+              <h2 className="text-2xl font-extrabold mb-5">
+                Support
+              </h2>
+
+              <div className="space-y-4">
+                <a
+                  href="tel:100"
+                  className="flex items-center gap-4 bg-red-500 px-5 py-4 rounded-2xl font-bold hover:bg-red-600 transition"
+                >
+                  <Phone />
+                  Emergency Call
+                </a>
+
+                <a
+                  href="mailto:support@driveease.com"
+                  className="flex items-center gap-4 bg-[#1a2332] px-5 py-4 rounded-2xl font-bold hover:bg-[#243041] transition"
+                >
+                  <Clock3 />
+                  Contact Support
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default DriverDashboard;
+}
