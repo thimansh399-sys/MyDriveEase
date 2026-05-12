@@ -23,9 +23,12 @@ const setupSocket = (io) => {
     // Join personal room
     if (socket.user.role === 'driver') {
       socket.join(`driver_${socket.user.id}`);
+    } else if (socket.user.role === 'fleet') {
+      socket.join(`fleet_${socket.user.id}`);
     } else {
       socket.join(`user_${socket.user.id}`);
     }
+
 
     // Driver sends location updates
     socket.on('driver-location-update', async (data) => {
@@ -60,6 +63,11 @@ const setupSocket = (io) => {
     socket.on('leave-booking', (bookingId) => {
       socket.leave(`booking_${bookingId}`);
     });
+
+    socket.on('join-fleet', (fleetId) => {
+      socket.join(`fleet_${fleetId}`);
+    });
+
 
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${socket.user.id}`);

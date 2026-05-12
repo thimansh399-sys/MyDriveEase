@@ -87,7 +87,8 @@ export default function Home() {
       linear-gradient(rgba(2,6,23,0.6), rgba(2,6,23,0.7)),
       url('/images/driver.png')
     `,
-    backgroundSize: "100%",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "cover",
     backgroundPosition: "center",
   }}
 >

@@ -55,6 +55,12 @@ const bookingSchema = new mongoose.Schema({
     max: 5,
     default: null,
   },
+  fleetId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Fleet',
+  default: null,
+},
+
   feedback: {
     type: String,
     default: '',

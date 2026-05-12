@@ -9,26 +9,37 @@ const connectDB = require('./config/db');
 const { PORT } = require('./config');
 const setupSocket = require('./socket');
 
+// ROUTES
 const authRoutes = require('./routes/auth');
+const fleetAuthRoutes = require('./routes/fleetAuth');
 const driverRoutes = require('./routes/drivers');
 const bookingRoutes = require('./routes/bookings');
+
+// ❌ REMOVE THIS LINE
+// const driverAuthRoutes = require('./routes/driverAuth');
 
 const app = express();
 const server = http.createServer(app);
 
 
-// ✅ SOCKET.IO
+// ==========================================
+// SOCKET.IO
+// ==========================================
+
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
+    origin: '*',
+    methods: ['GET', 'POST'],
   },
 });
 
 app.set('io', io);
 
 
-// ✅ SECURITY
+// ==========================================
+// SECURITY
+// ==========================================
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -36,60 +47,168 @@ app.use(
 );
 
 
-// ✅ CORS FIX
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+// ==========================================
+// CORS
+// ==========================================
 
-// ✅ PREFLIGHT FIX
-app.options("*", cors());
+app.use(
+  cors({
+    origin: '*',
+    methods: [
+      'GET',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS',
+    ],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+    ],
+  })
+);
+
+app.options('*', cors());
 
 
-// ✅ BODY PARSER
-app.use(express.json({ limit: '10kb' }));
+// ==========================================
+// BODY PARSER
+// ==========================================
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
 
-// ✅ RATE LIMITER
+// ==========================================
+// RATE LIMITER
+// ==========================================
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
   message: {
-    message: 'Too many requests, please try again later',
+    message:
+      'Too many requests, please try again later',
   },
 });
 
 app.use('/api/', limiter);
 
 
-// ✅ ROUTES
+// ==========================================
+// ROUTES
+// ==========================================
+
+// USER + DRIVER AUTH
 app.use('/api/auth', authRoutes);
+
+// FLEET OWNER AUTH (currently not implemented)
+app.use('/api/fleet-auth', (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Fleet auth routes are not implemented in this version',
+  });
+});
+
+// DRIVER ROUTES
 app.use('/api/drivers', driverRoutes);
+
+// BOOKINGS
 app.use('/api/bookings', bookingRoutes);
-app.use('/api/drivers', require('./routes/drivers'));
+
+// FLEET ROUTES (currently not implemented)
+app.use('/api/fleet', (req, res) => {
+  res.status(501).json({
+    success: false,
+    message: 'Fleet routes are not implemented in this version',
+  });
+});
 
 
-// ✅ HEALTH CHECK
+
+
+// ==========================================
+// ROOT ROUTE
+// ==========================================
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'DriveEase Backend Running 🚀',
+  });
+});
+
+
+// ==========================================
+// HEALTH CHECK
+// ==========================================
+
 app.get('/api/health', (req, res) => {
   res.json({
+    success: true,
     status: 'ok',
     timestamp: new Date().toISOString(),
   });
 });
 
 
-// ✅ SOCKET SETUP
+// ==========================================
+// SOCKET SETUP
+// ==========================================
+
 setupSocket(io);
 
 
-// ✅ START SERVER
+// ==========================================
+// 404 HANDLER
+// ==========================================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found',
+  });
+});
+
+
+// ==========================================
+// GLOBAL ERROR HANDLER
+// ==========================================
+
+app.use((err, req, res, next) => {
+
+  console.log('SERVER ERROR =>', err);
+
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error',
+  });
+
+});
+
+
+// ==========================================
+// START SERVER
+// ==========================================
+
 connectDB()
   .then(() => {
+
     server.listen(PORT, () => {
-      console.log(`🚀 DriveEase server running on port ${PORT}`);
+
+      console.log(
+        `🚀 DriveEase server running on port ${PORT}`
+      );
+
     });
+
   })
   .catch((err) => {
-    console.log('❌ DB Connection Error:', err);
+
+    console.log(
+      '❌ DB Connection Error:',
+      err
+    );
+
   });

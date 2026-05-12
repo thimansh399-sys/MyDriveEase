@@ -2,6 +2,7 @@ const express = require('express');
 
 const Booking = require('../models/Booking');
 const Driver = require('../models/Driver');
+const Fleet = require('../models/Fleet');
 
 const { auth, requireRole } = require('../middleware/auth');
 
@@ -164,10 +165,6 @@ router.post(
 
       }
 
-      // ==================================
-      // AUTO DISTANCE FIX
-      // ==================================
-
       let finalDistance = distance;
 
       if (
@@ -249,7 +246,7 @@ router.post(
 );
 
 // ==========================================
-// HIRE DRIVER ONLY
+// HIRE DRIVER / CAB + DRIVER
 // ==========================================
 
 router.post(
@@ -282,6 +279,10 @@ router.post(
 
       }
 
+      // Ensure fleet assignment fields exist in booking flow
+      // (fleetId defaults to null in schema)
+
+
       // ==================================
       // FIX HOURS
       // ==================================
@@ -311,45 +312,6 @@ router.post(
       const totalFare =
         totalHours * 120;
 
-      console.log(
-        'TOTAL HOURS =>',
-        totalHours
-      );
-
-      console.log(
-        'TOTAL FARE =>',
-        totalFare
-      );
-
-      // ==================================
-      // FIND NEARBY DRIVERS
-      // ==================================
-
-      const nearbyDrivers =
-        await Driver.find({
-
-          status: 'online',
-
-          location: {
-            $near: {
-              $geometry: {
-                type: 'Point',
-                coordinates:
-                  pickup.coordinates || [
-                    0,
-                    0,
-                  ],
-              },
-              $maxDistance: 20000,
-            },
-          },
-        });
-
-      console.log(
-        'DRIVERS FOUND =>',
-        nearbyDrivers.length
-      );
-
       // ==================================
       // DISTANCE FIX
       // ==================================
@@ -363,6 +325,19 @@ router.post(
       console.log(
         'DISTANCE =>',
         calculatedDistance
+      );
+
+      // ==================================
+      // FIND ONLINE FLEETS
+      // ==================================
+
+      const onlineFleets = await Fleet.find({
+        status: 'online',
+      });
+
+      console.log(
+        'FLEETS FOUND =>',
+        onlineFleets.length
       );
 
       // ==================================
@@ -419,13 +394,13 @@ router.post(
 
       if (req.app.get('io')) {
 
-        nearbyDrivers.forEach(
-          (driver) => {
+        onlineFleets.forEach(
+          (fleet) => {
 
             req.app
               .get('io')
               .to(
-                `driver_${driver._id}`
+                `fleet_${fleet._id}`
               )
               .emit(
                 'new-driver-booking',
@@ -461,8 +436,8 @@ router.post(
         message:
           'Driver request sent',
 
-        driversNotified:
-          nearbyDrivers.length,
+        fleetsNotified:
+          onlineFleets.length,
 
         booking,
       });
@@ -559,10 +534,11 @@ router.get(
 // ==========================================
 
 router.post(
-  '/:id/accept',
+  '/fleet/:id/accept',
   auth,
-  requireRole('driver'),
+  requireRole('fleet'),
   async (req, res) => {
+
 
     try {
 
@@ -583,19 +559,16 @@ router.post(
       booking.driverId =
         req.user.id;
 
-      booking.status =
-        'accepted';
-
+      // Assign fleet to this booking
+      booking.fleetId = req.user.id;
+      booking.status = 'accepted';
       await booking.save();
 
-      await Driver.findByIdAndUpdate(
-        req.user.id,
-        {
-          status: 'on-ride',
-        }
-      );
+      res.json({
+        success: true,
+        booking,
+      });
 
-      res.json(booking);
 
     } catch (err) {
 
@@ -817,84 +790,138 @@ router.post(
 );
 
 // ==========================================
-// GET BOOKING BY ID
+// SUBMIT RATING
 // ==========================================
 
-// ==========================================
-// SUBMIT RATING (User) for a completed booking
-// POST /api/bookings/:id/rate
-// ==========================================
 router.post(
   '/:id/rate',
   auth,
   requireRole('user'),
   async (req, res) => {
     try {
-      const { rating, feedback } = req.body;
 
-      if (!rating || rating < 1 || rating > 5) {
+      const {
+        rating,
+        feedback,
+      } = req.body;
+
+      if (
+        !rating ||
+        rating < 1 ||
+        rating > 5
+      ) {
+
         return res.status(400).json({
           success: false,
-          message: 'Valid rating (1-5) is required',
+          message:
+            'Valid rating (1-5) is required',
         });
+
       }
 
-      const booking = await Booking.findById(req.params.id);
+      const booking =
+        await Booking.findById(
+          req.params.id
+        );
+
       if (!booking) {
+
         return res.status(404).json({
           success: false,
-          message: 'Booking not found',
+          message:
+            'Booking not found',
         });
+
       }
 
-      if (String(booking.userId) !== String(req.user.id)) {
+      if (
+        String(booking.userId) !==
+        String(req.user.id)
+      ) {
+
         return res.status(403).json({
           success: false,
-          message: 'Not allowed to rate this booking',
+          message:
+            'Not allowed to rate this booking',
         });
+
       }
 
       booking.rating = rating;
-      booking.feedback = feedback || '';
+      booking.feedback =
+        feedback || '';
 
-      // Update driver rating (average) if driver exists
       if (booking.driverId) {
+
         await Driver.findByIdAndUpdate(
           booking.driverId,
-          { rating: booking.rating },
-          { new: true }
+          {
+            rating:
+              booking.rating,
+          },
+          {
+            new: true,
+          }
         );
       }
 
-      // Mark booking completed if not already (optional safeguard)
-      booking.status = booking.status === 'completed' ? booking.status : booking.status;
-
       await booking.save();
 
-      // Notify driver via socket
-      if (req.app.get('io') && booking.driverId) {
+      if (
+        req.app.get('io') &&
+        booking.driverId
+      ) {
+
         req.app
           .get('io')
-          .to(`driver_${booking.driverId}`)
-          .emit('ride-rated', {
-            bookingId: booking._id,
-            driverId: booking.driverId,
-            userId: booking.userId,
-            rating: booking.rating,
-            feedback: booking.feedback,
-          });
+          .to(
+            `driver_${booking.driverId}`
+          )
+          .emit(
+            'ride-rated',
+            {
+              bookingId:
+                booking._id,
+
+              driverId:
+                booking.driverId,
+
+              userId:
+                booking.userId,
+
+              rating:
+                booking.rating,
+
+              feedback:
+                booking.feedback,
+            }
+          );
       }
 
-      return res.json({ success: true, booking });
+      return res.json({
+        success: true,
+        booking,
+      });
+
     } catch (err) {
-      console.error('Rate error =>', err);
+
+      console.error(
+        'Rate error =>',
+        err
+      );
+
       return res.status(500).json({
         success: false,
         message: 'Server error',
       });
+
     }
   }
 );
+
+// ==========================================
+// GET BOOKING BY ID
+// ==========================================
 
 router.get(
   '/:id',
