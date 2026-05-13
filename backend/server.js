@@ -53,7 +53,12 @@ app.use(
 
 app.use(
   cors({
-    origin: '*',
+    origin: [
+      'http://localhost:5173',
+      'https://mydriveease.in',
+      'https://www.mydriveease.in',
+    ],
+
     methods: [
       'GET',
       'POST',
@@ -62,14 +67,15 @@ app.use(
       'DELETE',
       'OPTIONS',
     ],
+
     allowedHeaders: [
       'Content-Type',
       'Authorization',
     ],
+
+    credentials: true,
   })
 );
-
-app.options('*', cors());
 
 
 // ==========================================
