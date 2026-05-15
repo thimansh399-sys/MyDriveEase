@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../utils/api';
 // ...existing code...
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 // ...existing code...
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatCurrency } from '../utils/helpers';
@@ -27,14 +27,13 @@ const Drivers = () => {
   const [availability, setAvailability] = useState('');
   const [rating, setRating] = useState('');
   const navigate = useNavigate();
+  const routerLocation = useLocation();
   const [bookingModal, setBookingModal] = useState(null); // {driver, pickup, drop}
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
 
   // Accept trip data from navigation state
-  const location = typeof window !== 'undefined' ? window.location : {};
-  const navState = (location && location.state) || {};
-  const [trip, setTrip] = useState(navState || {});
+  const [trip] = useState(routerLocation.state || {});
 
   useEffect(() => {
     let interval;
@@ -221,7 +220,11 @@ const Drivers = () => {
                 <span className="text-xs text-gray-400 ml-auto">{driver.phone}</span>
               </div>
               <button
-                onClick={() => navigate('/hire-driver')}
+                onClick={() =>
+                  trip?.pickup && trip?.drop
+                    ? bookDriver(driver._id)
+                    : navigate('/hire-driver')
+                }
                 className="mt-3 bg-green-400 text-black font-bold py-2 rounded-xl hover:bg-green-300 transition-colors"
               >
                 Book This Driver

@@ -220,11 +220,15 @@ router.post(
 
           fare: {
             total:
-              fare?.total || 0,
+              typeof fare === 'number'
+                ? fare
+                : fare?.total || 0,
           },
 
           driverId:
             driverId || null,
+
+          fleetId: null,
 
           status: 'pending',
         });
@@ -278,10 +282,6 @@ router.post(
         });
 
       }
-
-      // Ensure fleet assignment fields exist in booking flow
-      // (fleetId defaults to null in schema)
-
 
       // ==================================
       // FIX HOURS
@@ -385,6 +385,10 @@ router.post(
             total: totalFare,
           },
 
+          fleetId: null,
+
+          driverId: null,
+
           status: 'pending',
         });
 
@@ -403,7 +407,7 @@ router.post(
                 `fleet_${fleet._id}`
               )
               .emit(
-                'new-driver-booking',
+                'new-fleet-booking',
                 {
 
                   bookingId:
@@ -434,7 +438,7 @@ router.post(
         success: true,
 
         message:
-          'Driver request sent',
+          'Fleet booking request sent',
 
         fleetsNotified:
           onlineFleets.length,
@@ -476,6 +480,10 @@ router.get(
           .populate(
             'driverId',
             'name phone vehicle rating'
+          )
+          .populate(
+            'fleetId',
+            'companyName ownerName phone'
           )
           .sort({
             createdAt: -1,
@@ -530,7 +538,48 @@ router.get(
 );
 
 // ==========================================
-// ACCEPT BOOKING
+// FLEET BOOKINGS
+// ==========================================
+
+router.get(
+  '/fleet/my',
+  auth,
+  requireRole('fleet'),
+  async (req, res) => {
+
+    try {
+
+      const bookings =
+        await Booking.find({
+          fleetId: req.user.id,
+        })
+          .populate(
+            'userId',
+            'name phone'
+          )
+          .sort({
+            createdAt: -1,
+          });
+
+      return res.json({
+        success: true,
+        bookings,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      return res.status(500).json({
+        message: 'Server error',
+      });
+
+    }
+  }
+);
+
+// ==========================================
+// FLEET ACCEPT BOOKING
 // ==========================================
 
 router.post(
@@ -539,6 +588,91 @@ router.post(
   requireRole('fleet'),
   async (req, res) => {
 
+    try {
+
+      const booking =
+        await Booking.findById(
+          req.params.id
+        );
+
+      if (!booking) {
+
+        return res.status(404).json({
+          success: false,
+          message: 'Booking not found',
+        });
+
+      }
+
+      if (
+        booking.status !== 'pending'
+      ) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            'Booking already accepted',
+        });
+
+      }
+
+      booking.fleetId =
+        req.user.id;
+
+      booking.status =
+        'fleet-accepted';
+
+      await booking.save();
+
+      if (req.app.get('io')) {
+
+        req.app
+          .get('io')
+          .to(
+            `user_${booking.userId}`
+          )
+          .emit(
+            'fleet-booking-accepted',
+            {
+              bookingId:
+                booking._id,
+
+              fleetId:
+                booking.fleetId,
+
+              status:
+                booking.status,
+            }
+          );
+      }
+
+      return res.json({
+        success: true,
+        booking,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Server error',
+      });
+
+    }
+  }
+);
+
+// ==========================================
+// DRIVER ACCEPT BOOKING
+// ==========================================
+
+router.post(
+  '/:id/accept',
+  auth,
+  requireRole('driver'),
+  async (req, res) => {
 
     try {
 
@@ -556,19 +690,46 @@ router.post(
 
       }
 
+      if (
+        booking.status !== 'pending'
+      ) {
+
+        return res.status(400).json({
+          message:
+            'Booking already accepted',
+        });
+
+      }
+
+      if (
+        booking.driverId &&
+        String(booking.driverId) !==
+          String(req.user.id)
+      ) {
+
+        return res.status(403).json({
+          message:
+            'This booking is assigned to another driver',
+        });
+
+      }
+
       booking.driverId =
         req.user.id;
 
-      // Assign fleet to this booking
-      booking.fleetId = req.user.id;
-      booking.status = 'accepted';
+      booking.status =
+        'accepted';
+
       await booking.save();
 
-      res.json({
-        success: true,
-        booking,
-      });
+      await Driver.findByIdAndUpdate(
+        req.user.id,
+        {
+          status: 'on-ride',
+        }
+      );
 
+      res.json(booking);
 
     } catch (err) {
 
@@ -918,6 +1079,42 @@ router.post(
     }
   }
 );
+// ==========================================
+// FLEET AVAILABLE BOOKINGS
+// ==========================================
+
+router.get(
+  '/fleet/available',
+  auth,
+  requireRole('fleet'),
+  async (req, res) => {
+
+    try {
+
+      const bookings = await Booking.find({
+        status: 'pending',
+        tripType: 'driver-only',
+      }).sort({
+        createdAt: -1,
+      });
+
+      res.json({
+        success: true,
+        bookings,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+        success: false,
+        message: 'Server error',
+      });
+
+    }
+  }
+);
 
 // ==========================================
 // GET BOOKING BY ID
@@ -941,6 +1138,10 @@ router.get(
           .populate(
             'driverId',
             'name phone vehicle rating location'
+          )
+          .populate(
+            'fleetId',
+            'companyName ownerName phone'
           );
 
       if (!booking) {
