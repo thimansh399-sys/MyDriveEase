@@ -69,12 +69,6 @@
       content="Safe and trusted driver booking service across India."
     />
 
-  </head>
-
-  <body>
-
-    <div id="root"></div>
-
     <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations()
@@ -98,6 +92,13 @@
           .catch(function () {});
       }
     </script>
+
+  </head>
+
+  <body>
+
+    <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
 
   </body>
