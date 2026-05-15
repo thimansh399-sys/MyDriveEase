@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import api from '../../utils/api';
 import {
   Building2,
   User,
@@ -20,6 +20,7 @@ const FleetSignup = () => {
     email: '',
     phone: '',
     password: '',
+    city: '',
     address: '',
   });
 
@@ -35,8 +36,8 @@ const FleetSignup = () => {
 
     try {
       // Backend register call
-      const res = await axios.post(
-        '/api/fleet-auth/register',
+      const res = await api.post(
+        '/fleet-auth/register',
         form
       );
 
@@ -191,6 +192,14 @@ const FleetSignup = () => {
                   type="password"
                   placeholder="Password"
                   value={form.password}
+                  onChange={handleChange}
+                />
+
+                <InputField
+                  icon={<MapPin size={20} />}
+                  name="city"
+                  placeholder="City"
+                  value={form.city}
                   onChange={handleChange}
                 />
 

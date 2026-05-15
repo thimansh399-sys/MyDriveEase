@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 
 export default function FleetLogin() {
 
@@ -26,8 +26,8 @@ export default function FleetLogin() {
 
       setLoading(true);
 
-      const res = await axios.post(
-        '/api/fleet-auth/login',
+      const res = await api.post(
+        '/fleet-auth/login',
         formData
       );
 
@@ -76,6 +76,7 @@ export default function FleetLogin() {
           placeholder="Email"
           value={formData.email}
           onChange={handleChange}
+          required
           className="w-full mb-4 p-4 rounded-xl bg-[#1f2937] text-white"
         />
 
@@ -85,6 +86,7 @@ export default function FleetLogin() {
           placeholder="Password"
           value={formData.password}
           onChange={handleChange}
+          required
           className="w-full mb-6 p-4 rounded-xl bg-[#1f2937] text-white"
         />
 

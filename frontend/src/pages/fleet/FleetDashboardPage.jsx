@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 
 export default function FleetDashboardPage() {
 
@@ -18,22 +18,12 @@ export default function FleetDashboardPage() {
 
     try {
 
-      const token = localStorage.getItem('token');
-
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
-      const availableRes = await axios.get(
-        '/api/bookings/fleet/available',
-        config
+      const availableRes = await api.get(
+        '/bookings/fleet/available'
       );
 
-      const myRes = await axios.get(
-        '/api/bookings/fleet/my',
-        config
+      const myRes = await api.get(
+        '/bookings/fleet/my'
       );
 
       setStats({
