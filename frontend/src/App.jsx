@@ -21,7 +21,10 @@ import FleetDashboardPage from './pages/fleet/FleetDashboardPage';
 import FleetBookingsPage from './pages/fleet/FleetBookingsPage';
 import FleetMyBookingsPage from './pages/fleet/FleetMyBookingsPage';
 import FleetProfilePage from './pages/fleet/FleetProfilePage';
+<<<<<<< HEAD
 import FleetVehiclesPage from './pages/fleet/FleetVehiclesPage';
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
 
 import FleetLogin from './pages/fleet/FleetLogin';
 import FleetSignup from './pages/fleet/FleetSignup';
@@ -133,11 +136,14 @@ function AppRoutes() {
   />
 
   <Route
+<<<<<<< HEAD
     path="vehicles"
     element={<FleetVehiclesPage />}
   />
 
   <Route
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
     path="my-bookings"
     element={<FleetMyBookingsPage />}
   />

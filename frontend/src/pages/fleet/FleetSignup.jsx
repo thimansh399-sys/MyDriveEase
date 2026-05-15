@@ -231,7 +231,11 @@ const FleetSignup = () => {
               <button
                 type="submit"
                 disabled={loading}
+<<<<<<< HEAD
                 className="w-full h-16 rounded-2xl bg-green-500 text-black font-black text-xl hover:scale-[1.02] transition-all shadow-2xl shadow-green-500/20 disabled:opacity-60"
+=======
+                className="w-full h-16 rounded-2xl bg-green-500 text-black font-black text-xl hover:scale-[1.02] transition-all shadow-2xl shadow-green-500/20"
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
               >
                 {loading ? 'Creating account...' : 'Create Partner Account'}
               </button>

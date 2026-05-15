@@ -9,11 +9,20 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 );
 
-// Register service worker for PWA support
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js').catch(err => {
-      console.error('Service worker registration failed:', err);
-    });
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+      .catch(err => {
+        console.error('Service worker cleanup failed:', err);
+      });
   });
+}
+
+if ('caches' in window) {
+  caches.keys()
+    .then(keys => Promise.all(keys.filter(key => key.startsWith('driveease-')).map(key => caches.delete(key))))
+    .catch(err => {
+      console.error('Cache cleanup failed:', err);
+    });
 }

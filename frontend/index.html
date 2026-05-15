@@ -69,6 +69,30 @@
       content="Safe and trusted driver booking service across India."
     />
 
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations()
+          .then(function (registrations) {
+            return Promise.all(registrations.map(function (registration) {
+              return registration.unregister();
+            }));
+          })
+          .catch(function () {});
+      }
+
+      if ('caches' in window) {
+        caches.keys()
+          .then(function (keys) {
+            return Promise.all(keys.filter(function (key) {
+              return key.indexOf('driveease-') === 0;
+            }).map(function (key) {
+              return caches.delete(key);
+            }));
+          })
+          .catch(function () {});
+      }
+    </script>
+
   </head>
 
   <body>

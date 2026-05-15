@@ -202,6 +202,7 @@ export default function BookingBox() {
         time: selectedTime,
       };
 
+<<<<<<< HEAD
       if (!user) {
         localStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify(bookingPayload));
         navigate("/login", {
@@ -214,6 +215,8 @@ export default function BookingBox() {
 
       await api.post("/bookings/create", bookingPayload);
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       navigate("/my-rides");
 
     } catch (err) {

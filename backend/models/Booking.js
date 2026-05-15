@@ -52,11 +52,14 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: 'wagonr',
   },
+<<<<<<< HEAD
   dispatchTarget: {
     type: String,
     enum: ['driver', 'fleet'],
     default: 'driver',
   },
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
   date: {
     type: String,
     default: '',

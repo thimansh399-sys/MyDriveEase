@@ -14,10 +14,13 @@ export default function FleetLayout() {
       path: '/fleet/bookings',
     },
     {
+<<<<<<< HEAD
       label: 'My Cabs',
       path: '/fleet/vehicles',
     },
     {
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       label: 'My Bookings',
       path: '/fleet/my-bookings',
     },
@@ -61,4 +64,8 @@ export default function FleetLayout() {
 
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640

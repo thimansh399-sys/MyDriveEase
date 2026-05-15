@@ -614,10 +614,13 @@ router.get(
           fleetId: req.user.id,
         })
           .populate(
+<<<<<<< HEAD
             'fleetVehicleId',
             'carType brand model plateNumber driverName driverPhone perKmRate hourlyRate fullDayRate'
           )
           .populate(
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
             'userId',
             'name phone'
           )
@@ -654,8 +657,11 @@ router.post(
 
     try {
 
+<<<<<<< HEAD
       const { fleetVehicleId } = req.body;
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       const booking =
         await Booking.findById(
           req.params.id
@@ -682,6 +688,7 @@ router.post(
 
       }
 
+<<<<<<< HEAD
       const vehicleQuery = {
         fleetId: req.user.id,
         status: 'available',
@@ -733,14 +740,22 @@ router.post(
           (vehicle.perKmRate || 0) * booking.distance;
       }
 
+=======
+      booking.fleetId =
+        req.user.id;
+
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       booking.status =
         'fleet-accepted';
 
       await booking.save();
 
+<<<<<<< HEAD
       vehicle.status = 'busy';
       await vehicle.save();
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       if (req.app.get('io')) {
 
         req.app
@@ -782,6 +797,7 @@ router.post(
 );
 
 // ==========================================
+<<<<<<< HEAD
 // FLEET COMPLETE BOOKING
 // ==========================================
 
@@ -900,6 +916,8 @@ router.post(
 );
 
 // ==========================================
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
 // DRIVER ACCEPT BOOKING
 // ==========================================
 
@@ -1326,6 +1344,7 @@ router.get(
 
     try {
 
+<<<<<<< HEAD
       const availableVehicles = await FleetVehicle.find({
         fleetId: req.user.id,
         status: 'available',
@@ -1389,6 +1408,18 @@ router.get(
       res.json({
         success: true,
         bookings: filteredBookings,
+=======
+      const bookings = await Booking.find({
+        status: 'pending',
+        tripType: 'driver-only',
+      }).sort({
+        createdAt: -1,
+      });
+
+      res.json({
+        success: true,
+        bookings,
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       });
 
     } catch (err) {
@@ -1430,10 +1461,13 @@ router.get(
           .populate(
             'fleetId',
             'companyName ownerName phone'
+<<<<<<< HEAD
           )
           .populate(
             'fleetVehicleId',
             'carType brand model plateNumber driverName driverPhone perKmRate hourlyRate fullDayRate'
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
           );
 
       if (!booking) {

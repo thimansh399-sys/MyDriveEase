@@ -4,6 +4,7 @@ import api from '../../utils/api';
 export default function FleetBookingsPage() {
 
   const [bookings, setBookings] = useState([]);
+<<<<<<< HEAD
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicles, setSelectedVehicles] = useState({});
 
@@ -21,6 +22,13 @@ export default function FleetBookingsPage() {
     }
   };
 
+=======
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
   const fetchBookings = async () => {
 
     try {
@@ -39,17 +47,27 @@ export default function FleetBookingsPage() {
   const acceptBooking = async (id) => {
 
     try {
+<<<<<<< HEAD
       const fleetVehicleId = selectedVehicles[id];
 
       await api.post(
         `/bookings/fleet/${id}/accept`,
         fleetVehicleId ? { fleetVehicleId } : {}
+=======
+
+      await api.post(
+        `/bookings/fleet/${id}/accept`,
+        {}
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       );
 
       alert('Booking Accepted');
 
       fetchBookings();
+<<<<<<< HEAD
       fetchVehicles();
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
 
     } catch (err) {
 
@@ -69,12 +87,15 @@ export default function FleetBookingsPage() {
 
       <div className="grid gap-5">
 
+<<<<<<< HEAD
         {vehicles.length === 0 && (
           <div className="bg-yellow-500/10 border border-yellow-400/30 text-yellow-100 rounded-3xl p-5">
             Add at least one available cab in My Cabs to accept matching bookings.
           </div>
         )}
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
         {bookings.map((booking) => (
 
           <div
@@ -113,6 +134,7 @@ export default function FleetBookingsPage() {
 
             </div>
 
+<<<<<<< HEAD
             <div className="mt-5 grid md:grid-cols-[1fr_auto] gap-3">
               <select
                 value={selectedVehicles[booking._id] || ''}
@@ -133,16 +155,21 @@ export default function FleetBookingsPage() {
               </select>
             </div>
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
           </div>
 
         ))}
 
+<<<<<<< HEAD
         {bookings.length === 0 && (
           <div className="bg-[#111827] p-8 rounded-3xl text-gray-300 border border-[#1f2937]">
             No matching booking requests right now.
           </div>
         )}
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       </div>
 
     </div>

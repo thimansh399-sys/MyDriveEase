@@ -24,6 +24,7 @@ export default function FleetMyBookingsPage() {
     }
   };
 
+<<<<<<< HEAD
   const completeBooking = async (id) => {
     try {
       await api.post(`/bookings/fleet/${id}/complete`);
@@ -46,6 +47,8 @@ export default function FleetMyBookingsPage() {
     }
   };
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
   return (
     <div>
 
@@ -82,6 +85,7 @@ export default function FleetMyBookingsPage() {
               {booking.status}
             </p>
 
+<<<<<<< HEAD
             {booking.fleetVehicleId && (
               <div className="mt-4 bg-[#1f2937] rounded-2xl p-4 text-sm text-gray-200">
                 <p className="font-bold text-white">
@@ -113,16 +117,21 @@ export default function FleetMyBookingsPage() {
               </div>
             )}
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
           </div>
 
         ))}
 
+<<<<<<< HEAD
         {bookings.length === 0 && (
           <div className="bg-[#111827] p-8 rounded-3xl text-gray-300 border border-[#1f2937]">
             No accepted bookings yet.
           </div>
         )}
 
+=======
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       </div>
 
     </div>

@@ -1,16 +1,28 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+<<<<<<< HEAD
 import { Building2, Lock, Mail, ShieldCheck, Truck } from 'lucide-react';
 import api from '../../utils/api';
 import { connectSocket } from '../../utils/socket';
 
 export default function FleetLogin() {
+=======
+import api from '../../utils/api';
+
+export default function FleetLogin() {
+
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+<<<<<<< HEAD
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+=======
+
+  const [loading, setLoading] = useState(false);
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
 
   const handleChange = (e) => {
     setFormData({
@@ -20,6 +32,7 @@ export default function FleetLogin() {
   };
 
   const handleSubmit = async (e) => {
+<<<<<<< HEAD
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -27,6 +40,25 @@ export default function FleetLogin() {
     try {
       const res = await api.post('/fleet-auth/login', formData);
       localStorage.setItem('token', res.data.token);
+=======
+
+    e.preventDefault();
+
+    try {
+
+      setLoading(true);
+
+      const res = await api.post(
+        '/fleet-auth/login',
+        formData
+      );
+
+      localStorage.setItem(
+        'token',
+        res.data.token
+      );
+
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
       localStorage.setItem(
         'user',
         JSON.stringify({
@@ -34,16 +66,30 @@ export default function FleetLogin() {
           role: 'fleet',
         })
       );
+<<<<<<< HEAD
       connectSocket(res.data.token);
       window.location.href = '/fleet/dashboard';
     } catch (err) {
       setError(err?.response?.data?.message || 'Login failed');
+=======
+
+      window.location.href = '/fleet/dashboard';
+
+    } catch (err) {
+
+      alert(
+        err?.response?.data?.message ||
+        'Login failed'
+      );
+
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
     } finally {
       setLoading(false);
     }
   };
 
   return (
+<<<<<<< HEAD
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#020817] px-6 py-14 text-white">
       <div className="absolute left-[-160px] top-[-160px] h-[440px] w-[440px] rounded-full bg-green-500/20 blur-[130px]" />
       <div className="absolute bottom-[-180px] right-[-140px] h-[440px] w-[440px] rounded-full bg-blue-500/20 blur-[130px]" />
@@ -147,6 +193,60 @@ export default function FleetLogin() {
           </div>
         </div>
       </div>
+=======
+    <div className="min-h-screen bg-[#0b1220] flex items-center justify-center px-5">
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-[#111827] w-full max-w-md p-8 rounded-3xl"
+      >
+
+        <h1 className="text-3xl font-bold text-white mb-8 text-center">
+          Travel Partner Login
+        </h1>
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          className="w-full mb-4 p-4 rounded-xl bg-[#1f2937] text-white"
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          className="w-full mb-6 p-4 rounded-xl bg-[#1f2937] text-white"
+        />
+
+        <button
+          disabled={loading}
+          className="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-4 rounded-xl"
+        >
+          {loading ? 'Please wait...' : 'Login'}
+        </button>
+
+        <p className="text-center text-gray-400 mt-5">
+
+          Create Travel Partner Account? 
+
+          <Link
+            to="/fleet/signup"
+            className="text-green-400"
+          >
+            Signup
+          </Link>
+
+        </p>
+
+      </form>
+>>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
     </div>
   );
 }
