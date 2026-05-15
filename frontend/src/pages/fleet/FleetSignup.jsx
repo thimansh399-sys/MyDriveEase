@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 
 const FleetSignup = () => {
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     companyName: '',
     ownerName: '',
@@ -33,6 +36,8 @@ const FleetSignup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
       // Backend register call
@@ -53,10 +58,16 @@ const FleetSignup = () => {
 
       window.location.href = '/fleet/dashboard';
     } catch (err) {
-      alert(
+      const message =
         err?.response?.data?.message ||
-          'Signup failed'
-      );
+        err?.response?.data?.error ||
+        err?.message ||
+        'Signup failed';
+
+      setError(message);
+      alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,6 +162,11 @@ const FleetSignup = () => {
               onSubmit={handleSubmit}
               className="space-y-6"
             >
+              {error && (
+                <div className="rounded-2xl border border-red-400/40 bg-red-500/15 px-5 py-4 text-sm font-bold text-red-200">
+                  {error}
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-5">
 
@@ -214,9 +230,10 @@ const FleetSignup = () => {
 
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full h-16 rounded-2xl bg-green-500 text-black font-black text-xl hover:scale-[1.02] transition-all shadow-2xl shadow-green-500/20"
               >
-                Create Partner Account
+                {loading ? 'Creating account...' : 'Create Partner Account'}
               </button>
 
               <p className="text-center text-gray-400">

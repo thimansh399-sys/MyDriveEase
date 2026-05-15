@@ -21,6 +21,24 @@ const bookingRoutes = require('./routes/bookings');
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://mydriveease.in',
+  'https://www.mydriveease.in',
+];
+
+const corsOrigin = (origin, callback) => {
+  if (
+    !origin ||
+    allowedOrigins.includes(origin) ||
+    /^https:\/\/my-drive-ease-[a-z0-9-]+\.vercel\.app$/i.test(origin)
+  ) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`CORS blocked origin: ${origin}`));
+};
+
 
 // ==========================================
 // SOCKET.IO
@@ -53,11 +71,7 @@ app.use(
 
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'https://mydriveease.in',
-      'https://www.mydriveease.in',
-    ],
+    origin: corsOrigin,
 
     methods: [
       'GET',
