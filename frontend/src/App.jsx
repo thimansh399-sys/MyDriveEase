@@ -16,15 +16,13 @@ import RateRide from './pages/RateRide';
 import LiveMap from './pages/LiveMap';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfileDashboard from './pages/ProfileDashboard';
+import UserProfile from './pages/UserProfile';
+
 import FleetLayout from './pages/fleet/FleetLayout';
 import FleetDashboardPage from './pages/fleet/FleetDashboardPage';
 import FleetBookingsPage from './pages/fleet/FleetBookingsPage';
 import FleetMyBookingsPage from './pages/fleet/FleetMyBookingsPage';
 import FleetProfilePage from './pages/fleet/FleetProfilePage';
-<<<<<<< HEAD
-import FleetVehiclesPage from './pages/fleet/FleetVehiclesPage';
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
 
 import FleetLogin from './pages/fleet/FleetLogin';
 import FleetSignup from './pages/fleet/FleetSignup';
@@ -34,7 +32,7 @@ import Insurance from './pages/Insurance';
 import Faqs from './pages/Faqs';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
-import HireDriver from "./pages/HireDriver";
+import HireDriver from './pages/HireDriver';
 
 import DriverLogin from './pages/DriverLogin';
 import DriverProfilePage from './pages/DriverProfile';
@@ -45,22 +43,22 @@ import DriverRideRequestsPage from './pages/driver/DriverRideRequestsPage';
 import DriverMyRidesPage from './pages/driver/DriverMyRidesPage';
 import DriverEarningsPage from './pages/driver/DriverEarningsPage';
 
-
-
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return null;
+
   if (!user) {
     const loginPath =
       role === 'driver'
         ? '/driver/login'
         : role === 'fleet'
-        ? '/fleet/login'
-        : '/login';
+          ? '/fleet/login'
+          : '/login';
 
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
+
   if (role && user.role !== role) return <Navigate to="/" />;
   return children;
 };
@@ -79,10 +77,10 @@ function AppRoutes() {
       <Route path="/hire-driver" element={<HireDriver />} />
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+
       <Route path="/fleet/login" element={<FleetLogin />} />
       <Route path="/fleet/signup" element={<FleetSignup />} />
 
-      {/* Dedicated Driver Login Route */}
       <Route path="/driver/login" element={<GuestRoute><DriverLogin /></GuestRoute>} />
 
       {/* User Routes */}
@@ -100,7 +98,7 @@ function AppRoutes() {
       <Route path="/track" element={<ProtectedRoute role="user"><LiveMap /></ProtectedRoute>} />
 
       <Route path="/payment" element={<ProtectedRoute role="user"><PaymentGateway /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
 
       {/* Driver Routes */}
       <Route
@@ -117,48 +115,24 @@ function AppRoutes() {
         <Route path="earnings" element={<DriverEarningsPage />} />
         <Route path="profile" element={<DriverProfilePage />} />
       </Route>
-<Route
-  path="/fleet"
-  element={
-    <ProtectedRoute role="fleet">
-      <FleetLayout />
-    </ProtectedRoute>
-  }
->
-  <Route
-    path="dashboard"
-    element={<FleetDashboardPage />}
-  />
 
-  <Route
-    path="bookings"
-    element={<FleetBookingsPage />}
-  />
-
-  <Route
-<<<<<<< HEAD
-    path="vehicles"
-    element={<FleetVehiclesPage />}
-  />
-
-  <Route
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
-    path="my-bookings"
-    element={<FleetMyBookingsPage />}
-  />
-
-  <Route
-    path="profile"
-    element={<FleetProfilePage />}
-  />
-</Route>
+      {/* Fleet Routes */}
+      <Route
+        path="/fleet"
+        element={
+          <ProtectedRoute role="fleet">
+            <FleetLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<FleetDashboardPage />} />
+        <Route path="bookings" element={<FleetBookingsPage />} />
+        <Route path="my-bookings" element={<FleetMyBookingsPage />} />
+        <Route path="profile" element={<FleetProfilePage />} />
+      </Route>
 
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
-
-
-
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
@@ -217,7 +191,7 @@ function SocketNotificationBridge({ addNotification }) {
 
 function App() {
   const { notifications, addNotification } = useNotifications();
-  // Optionally, pass addNotification via context or props for use in pages
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -233,3 +207,4 @@ function App() {
 }
 
 export default App;
+

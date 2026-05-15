@@ -1,139 +1,104 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../../utils/api';
 
 export default function FleetMyBookingsPage() {
-
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchBookings();
+  const fleetId = useMemo(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      return user?.fleetId || user?._id || user?.id;
+    } catch {
+      return null;
+    }
   }, []);
 
-  const fetchBookings = async () => {
+  useEffect(() => {
+    let active = true;
 
-    try {
+    const fetchBookings = async () => {
+      try {
+        setError('');
+        setLoading(true);
 
-      const res = await api.get(
-        '/bookings/fleet/my'
-      );
+        // API shape may vary; try the intended endpoint first.
+        const res = await api.get('/bookings/fleet/my');
+        if (!active) return;
 
-      setBookings(res.data.bookings || []);
+        setBookings(res.data?.bookings || res.data || []);
+      } catch (err) {
+        if (!active) return;
+        setError(err?.response?.data?.message || 'Failed to load bookings');
+      } finally {
+        if (!active) return;
+        setLoading(false);
+      }
+    };
 
-    } catch (err) {
-      console.log(err);
-    }
-  };
+    fetchBookings();
+    return () => {
+      active = false;
+    };
+  }, []);
 
-<<<<<<< HEAD
   const completeBooking = async (id) => {
     try {
-      await api.post(`/bookings/fleet/${id}/complete`);
-      alert('Booking completed');
-      fetchBookings();
+      await api.post(`/bookings/${id}/complete`);
+      setBookings((prev) => prev.filter((b) => b._id !== id && b.id !== id));
     } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to complete booking');
+      // keep UI simple
+      setError(err?.response?.data?.message || 'Failed to update booking');
     }
   };
 
-  const releaseBooking = async (id) => {
-    if (!window.confirm('Release this booking and make the cab available again?')) return;
-
-    try {
-      await api.post(`/bookings/fleet/${id}/cancel`);
-      alert('Booking released');
-      fetchBookings();
-    } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to release booking');
-    }
-  };
-
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
   return (
-    <div>
+    <div className="min-h-[60vh]">
+      <h2 className="mb-4 text-2xl font-black">My Bookings</h2>
 
-      <h1 className="text-4xl font-bold mb-8">
-        My Travel Partner Bookings
-      </h1>
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">
+          {error}
+        </div>
+      )}
 
-      <div className="grid gap-5">
+      {loading ? (
+        <div className="text-slate-300">Loading...</div>
+      ) : bookings.length === 0 ? (
+        <div className="text-slate-400">No bookings found.</div>
+      ) : (
+        <div className="space-y-4">
+          {bookings.map((booking) => {
+            const pickup = booking?.pickup?.address || 'Pickup';
+            const drop = booking?.drop?.address || 'Drop';
+            const status = booking?.status || 'unknown';
+            const id = booking?._id || booking?.id;
 
-        {bookings.map((booking) => (
+            return (
+              <div key={id || `${pickup}-${drop}`} className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-slate-300">{pickup} → {drop}</p>
+                    <p className="mt-1 text-lg font-bold">Status: <span className="text-green-300">{status}</span></p>
+                  </div>
 
-          <div
-            key={booking._id}
-            className="bg-[#111827] p-6 rounded-3xl"
-          >
-
-            <p className="text-xl font-bold">
-              {booking.pickup?.address}
-            </p>
-
-            <p className="mt-2 text-gray-400">
-              To
-            </p>
-
-            <p className="text-xl font-bold mt-2">
-              {booking.drop?.address}
-            </p>
-
-            <p className="mt-4 text-green-400 font-bold">
-              ₹{booking?.fare?.total}
-            </p>
-
-            <p className="mt-3 inline-block bg-green-500 text-black px-4 py-2 rounded-full font-bold">
-              {booking.status}
-            </p>
-
-<<<<<<< HEAD
-            {booking.fleetVehicleId && (
-              <div className="mt-4 bg-[#1f2937] rounded-2xl p-4 text-sm text-gray-200">
-                <p className="font-bold text-white">
-                  Assigned Cab: {booking.fleetVehicleId.carType} - {booking.fleetVehicleId.plateNumber}
-                </p>
-                <p className="mt-1">
-                  {[booking.fleetVehicleId.brand, booking.fleetVehicleId.model].filter(Boolean).join(' ')}
-                </p>
-                <p className="mt-1">
-                  Driver: {booking.fleetVehicleId.driverName || 'Not assigned'} {booking.fleetVehicleId.driverPhone ? `• ${booking.fleetVehicleId.driverPhone}` : ''}
-                </p>
+                  {status !== 'completed' && status !== 'cancelled' && (
+                    <button
+                      type="button"
+                      onClick={() => id && completeBooking(id)}
+                      className="mt-2 rounded-2xl bg-green-500 px-4 py-2 text-black font-bold hover:bg-green-400 disabled:opacity-60"
+                    >
+                      Mark Completed
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-
-            {booking.status !== 'completed' && (
-              <div className="flex gap-3 mt-5">
-                <button
-                  onClick={() => completeBooking(booking._id)}
-                  className="bg-green-500 text-black px-5 py-3 rounded-xl font-bold"
-                >
-                  Mark Completed
-                </button>
-                <button
-                  onClick={() => releaseBooking(booking._id)}
-                  className="bg-red-500 px-5 py-3 rounded-xl font-bold"
-                >
-                  Release Booking
-                </button>
-              </div>
-            )}
-
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
-          </div>
-
-        ))}
-
-<<<<<<< HEAD
-        {bookings.length === 0 && (
-          <div className="bg-[#111827] p-8 rounded-3xl text-gray-300 border border-[#1f2937]">
-            No accepted bookings yet.
-          </div>
-        )}
-
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
-      </div>
-
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
+

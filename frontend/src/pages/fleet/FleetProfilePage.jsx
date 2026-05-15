@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -49,6 +48,7 @@ const StatCard = ({ icon: Icon, label, value, tone = 'text-white' }) => (
 
 export default function FleetProfilePage() {
   const { user } = useAuth();
+
   const storedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('user')) || {};
@@ -56,7 +56,9 @@ export default function FleetProfilePage() {
       return {};
     }
   }, []);
+
   const profile = user || storedUser;
+
   const [stats, setStats] = useState({
     availableBookings: 0,
     acceptedBookings: 0,
@@ -65,6 +67,7 @@ export default function FleetProfilePage() {
     busyCabs: 0,
     offlineCabs: 0,
   });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -106,6 +109,7 @@ export default function FleetProfilePage() {
 
   const companyName = profile?.companyName || 'Travel Partner';
   const ownerName = profile?.ownerName || profile?.name || 'Owner';
+
   const initials = companyName
     .split(' ')
     .filter(Boolean)
@@ -113,15 +117,16 @@ export default function FleetProfilePage() {
     .map((part) => part[0])
     .join('')
     .toUpperCase();
+
   const isVerified = Boolean(profile?.verified);
-  const readinessScore = stats.totalCabs
-    ? Math.round((stats.availableCabs / stats.totalCabs) * 100)
-    : 0;
+
+  const readinessScore = stats.totalCabs ? Math.round((stats.availableCabs / stats.totalCabs) * 100) : 0;
 
   return (
     <div className="space-y-8">
       <section className="relative overflow-hidden rounded-[2rem] border border-emerald-400/20 bg-[#0d1728] p-6 shadow-2xl shadow-black/20 lg:p-8">
         <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.22),transparent_42%),linear-gradient(135deg,rgba(47,134,255,0.2),transparent_48%)] lg:block" />
+
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <div className="grid h-24 w-24 shrink-0 place-items-center rounded-3xl bg-green-500 text-3xl font-black text-slate-950 shadow-xl shadow-green-500/20">
@@ -130,11 +135,13 @@ export default function FleetProfilePage() {
 
             <div>
               <div className="mb-3 flex flex-wrap gap-2">
-                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-                  isVerified
-                    ? 'border-green-400/30 bg-green-500/15 text-green-200'
-                    : 'border-amber-400/30 bg-amber-500/15 text-amber-100'
-                }`}>
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${
+                    isVerified
+                      ? 'border-green-400/30 bg-green-500/15 text-green-200'
+                      : 'border-amber-400/30 bg-amber-500/15 text-amber-100'
+                  }`}
+                >
                   <ShieldCheck size={14} />
                   {isVerified ? 'Verified partner' : 'Verification pending'}
                 </span>
@@ -153,10 +160,16 @@ export default function FleetProfilePage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:w-[360px]">
-            <Link to="/fleet/vehicles" className="rounded-2xl bg-green-500 px-5 py-4 text-center font-black text-slate-950 transition hover:bg-green-400">
+            <Link
+              to="/fleet/vehicles"
+              className="rounded-2xl bg-green-500 px-5 py-4 text-center font-black text-slate-950 transition hover:bg-green-400"
+            >
               Manage Cabs
             </Link>
-            <Link to="/fleet/bookings" className="rounded-2xl border border-slate-600 bg-slate-950/40 px-5 py-4 text-center font-bold text-white transition hover:border-green-400">
+            <Link
+              to="/fleet/bookings"
+              className="rounded-2xl border border-slate-600 bg-slate-950/40 px-5 py-4 text-center font-bold text-white transition hover:border-green-400"
+            >
               View Leads
             </Link>
           </div>
@@ -200,7 +213,9 @@ export default function FleetProfilePage() {
             <div>
               <div className="mb-2 flex justify-between text-sm">
                 <span className="text-slate-300">Available cabs</span>
-                <span className="font-bold text-white">{stats.availableCabs}/{stats.totalCabs}</span>
+                <span className="font-bold text-white">
+                  {stats.availableCabs}/{stats.totalCabs}
+                </span>
               </div>
               <div className="h-3 rounded-full bg-slate-800">
                 <div className="h-3 rounded-full bg-green-500" style={{ width: `${readinessScore}%` }} />
@@ -236,55 +251,4 @@ export default function FleetProfilePage() {
     </div>
   );
 }
-=======
-export default function FleetProfilePage() {
 
-  const user = JSON.parse(
-    localStorage.getItem('user')
-  );
-
-  return (
-    <div>
-
-      <h1 className="text-4xl font-bold mb-8">
-        Travel Partner Profile
-      </h1>
-
-      <div className="bg-[#111827] p-8 rounded-3xl max-w-2xl">
-
-        <div className="mb-5">
-          <p className="text-gray-400">
-            Company Name
-          </p>
-
-          <p className="text-xl font-bold mt-1">
-            {user?.companyName}
-          </p>
-        </div>
-
-        <div className="mb-5">
-          <p className="text-gray-400">
-            Owner Name
-          </p>
-
-          <p className="text-xl font-bold mt-1">
-            {user?.ownerName}
-          </p>
-        </div>
-
-        <div className="mb-5">
-          <p className="text-gray-400">
-            Email
-          </p>
-
-          <p className="text-xl font-bold mt-1">
-            {user?.email}
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640

@@ -1,71 +1,55 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useEffect } from 'react';
+import { Car, LayoutDashboard, Receipt, User, Truck } from 'lucide-react';
+
+const navItems = [
+  { label: 'Dashboard', to: 'dashboard', icon: LayoutDashboard },
+  { label: 'Bookings', to: 'bookings', icon: Receipt },
+  { label: 'My Bookings', to: 'my-bookings', icon: Truck },
+  { label: 'Profile', to: 'profile', icon: User },
+];
 
 export default function FleetLayout() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  const location = useLocation();
-
-  const navItems = [
-    {
-      label: 'Dashboard',
-      path: '/fleet/dashboard',
-    },
-    {
-      label: 'Available Bookings',
-      path: '/fleet/bookings',
-    },
-    {
-<<<<<<< HEAD
-      label: 'My Cabs',
-      path: '/fleet/vehicles',
-    },
-    {
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
-      label: 'My Bookings',
-      path: '/fleet/my-bookings',
-    },
-    {
-      label: 'Profile',
-      path: '/fleet/profile',
-    },
-  ];
+  useEffect(() => {
+    // If user loads but is missing role, protect route will redirect
+    // Still safe to noop here.
+    if (!loading && !user) navigate('/fleet/login');
+  }, [loading, user, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#0b1220] text-white flex">
+    <div className="min-h-screen bg-[#0b1220] text-white">
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-black">Fleet Partner</h1>
+        </div>
 
-      <div className="w-[260px] bg-[#111827] border-r border-[#1f2937] p-5">
+        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+          <aside className="rounded-3xl border border-white/10 bg-white/5 p-3">
+            <div className="space-y-2">
+              {navItems.map(({ label, to, icon: Icon }) => (
+                <button
+                  key={to}
+                  type="button"
+                  onClick={() => navigate(`/fleet/${to}`)}
+                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold hover:bg-white/10"
+                >
+                  <Icon size={18} className="text-green-400" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </aside>
 
-        <h1 className="text-3xl font-bold text-green-400 mb-10">
-          Travel Partner Panel
-        </h1>
-
-        <div className="flex flex-col gap-4">
-
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`px-4 py-3 rounded-xl transition ${
-                location.pathname === item.path
-                  ? 'bg-green-500 text-black font-bold'
-                  : 'bg-[#1f2937] hover:bg-[#374151]'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-
+          <main className="rounded-3xl border border-white/10 bg-white/5 p-4 lg:p-6">
+            <Outlet />
+          </main>
         </div>
       </div>
-
-      <div className="flex-1 p-6 overflow-auto">
-        <Outlet />
-      </div>
-
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
+

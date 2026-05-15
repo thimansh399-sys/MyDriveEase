@@ -1,8 +1,7 @@
 # TODO
 
-## Module script MIME type fix (Vercel)
-- [x] Confirm Vite build outputs correct module JS under `dist/assets/*`.
-- [x] Find the likely cause: `frontend/vercel.json` rewrite sends ALL paths (including asset/module requests) to `/index.html`, which is served as `text/html`.
-- [ ] Update `frontend/vercel.json` to avoid rewriting asset/module requests.
-- [ ] Redeploy to Vercel and hard refresh.
+- [ ] Enhance `frontend/src/pages/UserProfile.jsx` UI to a modern, premium layout (header, avatar card, consistent inputs)
+- [ ] Improve UX: show API error messages (no empty catch), better success state
+- [ ] Keep existing update behavior: edit `name` + `avatar` via `PUT /users/me`, keep `phone` disabled
+- [ ] Quick run/test in frontend to confirm the page renders and updates properly
 

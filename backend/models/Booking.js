@@ -1,108 +1,132 @@
 const mongoose = require('mongoose');
 
-const bookingSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  driverId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Driver',
-    default: null,
-  },
-  pickup: {
-    address: { type: String, required: true },
-    coordinates: {
-      type: [Number], // [lng, lat]
+const bookingSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
-  },
-  drop: {
-    address: { type: String, required: true },
-    coordinates: {
-      type: [Number], // [lng, lat]
-      required: true,
+    driverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Driver',
+      default: null,
     },
-  },
-  distance: {
-    type: Number, // in km
-    required: true,
-  },
-  duration: {
-    type: Number, // in minutes
-    default: 0,
-  },
-  fare: {
-    baseFare: { type: Number, default: 50 },
-    distanceCost: { type: Number, default: 0 },
-    insurance: { type: Number, default: 0 },
-    insurancePlan: {
-      type: String,
-      enum: ['none', 'mini', 'premium'],
-      default: 'none',
-    },
-    total: { type: Number, default: 0 },
-  },
-  tripType: {
-    type: String,
-    default: 'oneway',
-  },
-  carType: {
-    type: String,
-    default: 'wagonr',
-  },
-<<<<<<< HEAD
-  dispatchTarget: {
-    type: String,
-    enum: ['driver', 'fleet'],
-    default: 'driver',
-  },
-=======
->>>>>>> 75a1a7472bf64f17c60a8dbc480344b8287f1640
-  date: {
-    type: String,
-    default: '',
-  },
-  time: {
-    type: String,
-    default: '',
-  },
-  hours: {
-    type: Number,
-    default: 0,
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'accepted', 'fleet-accepted', 'arriving', 'in-progress', 'completed', 'cancelled'],
-    default: 'pending',
-  },
-  rating: {
-    type: Number,
-    min: 1,
-    max: 5,
-    default: null,
-  },
-  fleetId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'Fleet',
-  default: null,
-},
-  fleetVehicleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'FleetVehicle',
-    default: null,
-  },
 
-  feedback: {
-    type: String,
-    default: '',
-    maxlength: 500,
+    pickup: {
+      address: { type: String, required: true },
+      coordinates: {
+        type: [Number], // [lng, lat]
+        required: true,
+      },
+    },
+
+    drop: {
+      address: { type: String, required: true },
+      coordinates: {
+        type: [Number], // [lng, lat]
+        required: true,
+      },
+    },
+
+    distance: {
+      type: Number,
+      required: true,
+    },
+
+    duration: {
+      type: Number, // in minutes
+      default: 0,
+    },
+
+    fare: {
+      baseFare: { type: Number, default: 50 },
+      distanceCost: { type: Number, default: 0 },
+      insurance: { type: Number, default: 0 },
+      insurancePlan: {
+        type: String,
+        enum: ['none', 'mini', 'premium'],
+        default: 'none',
+      },
+      total: { type: Number, default: 0 },
+    },
+
+    tripType: {
+      type: String,
+      default: 'oneway',
+    },
+
+    carType: {
+      type: String,
+      default: 'wagonr',
+    },
+
+    dispatchTarget: {
+      type: String,
+      enum: ['driver', 'fleet'],
+      default: 'driver',
+    },
+
+    // If provided as separate date/time strings (some frontend sends these)
+    date: {
+      type: String,
+      default: '',
+    },
+    time: {
+      type: String,
+      default: '',
+    },
+
+    hours: {
+      type: Number,
+      default: 0,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        'pending',
+        'accepted',
+        'fleet-accepted',
+        'arriving',
+        'in-progress',
+        'completed',
+        'cancelled',
+      ],
+      default: 'pending',
+    },
+
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null,
+    },
+
+    fleetId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Fleet',
+      default: null,
+    },
+    fleetVehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FleetVehicle',
+      default: null,
+    },
+
+    feedback: {
+      type: String,
+      default: '',
+      maxlength: 500,
+    },
+
+    otp: {
+      type: String,
+      default: null,
+    },
   },
-  otp: {
-    type: String,
-    default: null,
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Booking', bookingSchema);
+
