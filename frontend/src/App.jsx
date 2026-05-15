@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import NotificationList from './components/NotificationList';
 import useNotifications from './hooks/useNotifications';
+import { getSocket } from './utils/socket';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -19,6 +21,7 @@ import FleetDashboardPage from './pages/fleet/FleetDashboardPage';
 import FleetBookingsPage from './pages/fleet/FleetBookingsPage';
 import FleetMyBookingsPage from './pages/fleet/FleetMyBookingsPage';
 import FleetProfilePage from './pages/fleet/FleetProfilePage';
+import FleetVehiclesPage from './pages/fleet/FleetVehiclesPage';
 
 import FleetLogin from './pages/fleet/FleetLogin';
 import FleetSignup from './pages/fleet/FleetSignup';
@@ -130,6 +133,11 @@ function AppRoutes() {
   />
 
   <Route
+    path="vehicles"
+    element={<FleetVehiclesPage />}
+  />
+
+  <Route
     path="my-bookings"
     element={<FleetMyBookingsPage />}
   />
@@ -151,12 +159,63 @@ function AppRoutes() {
   );
 }
 
+function SocketNotificationBridge({ addNotification }) {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket || !user) return;
+
+    const playAlert = () => {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        const context = new AudioContext();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.frequency.value = 880;
+        gain.gain.value = 0.05;
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.18);
+      } catch {
+        // Browser autoplay policies can block sound; toast still shows.
+      }
+    };
+
+    const handleFleetBooking = (payload) => {
+      addNotification(
+        `New booking request: ${payload?.pickup?.address || 'pickup'} to ${payload?.drop?.address || 'drop'}`,
+        'success'
+      );
+      playAlert();
+    };
+
+    const handleFleetAccepted = () => {
+      addNotification('Your booking has been accepted by a travel partner.', 'success');
+    };
+
+    socket.on('new-fleet-booking', handleFleetBooking);
+    socket.on('fleet-booking-accepted', handleFleetAccepted);
+
+    return () => {
+      socket.off('new-fleet-booking', handleFleetBooking);
+      socket.off('fleet-booking-accepted', handleFleetAccepted);
+    };
+  }, [addNotification, user]);
+
+  return null;
+}
+
 function App() {
   const { notifications, addNotification } = useNotifications();
   // Optionally, pass addNotification via context or props for use in pages
   return (
     <BrowserRouter>
       <AuthProvider>
+        <SocketNotificationBridge addNotification={addNotification} />
         <div className="min-h-screen bg-gray-50 dark:bg-[#0a1019]">
           <Navbar />
           <AppRoutes />

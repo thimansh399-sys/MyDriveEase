@@ -12,6 +12,8 @@ const fleetVehicleSchema =
       carType: {
         type: String,
         required: true,
+        trim: true,
+        lowercase: true,
       },
 
       brand: String,
@@ -24,6 +26,31 @@ const fleetVehicleSchema =
       },
 
       seats: Number,
+
+      serviceCity: {
+        type: String,
+        default: '',
+        trim: true,
+        lowercase: true,
+      },
+
+      perKmRate: {
+        type: Number,
+        default: 12,
+        min: 0,
+      },
+
+      hourlyRate: {
+        type: Number,
+        default: 120,
+        min: 0,
+      },
+
+      fullDayRate: {
+        type: Number,
+        default: 2500,
+        min: 0,
+      },
 
       driverName: String,
 
@@ -43,6 +70,13 @@ const fleetVehicleSchema =
       timestamps: true,
     }
   );
+
+fleetVehicleSchema.index({
+  fleetId: 1,
+  plateNumber: 1,
+}, {
+  unique: true,
+});
 
 module.exports = mongoose.model(
   'FleetVehicle',

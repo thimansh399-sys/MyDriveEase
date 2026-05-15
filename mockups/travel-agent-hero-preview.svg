@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07101f"/>
+      <stop offset="0.48" stop-color="#0c1c31"/>
+      <stop offset="1" stop-color="#073424"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="40%" cy="44%" r="55%">
+      <stop offset="0" stop-color="#05d66f" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#05d66f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="76%" cy="30%" r="55%">
+      <stop offset="0" stop-color="#2f86ff" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#2f86ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="28" stdDeviation="28" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <style>
+      .font { font-family: Inter, Segoe UI, Arial, sans-serif; }
+      .muted { fill: #aab6c5; }
+      .white { fill: #ffffff; }
+      .green { fill: #05df77; }
+      .blue { fill: #2f86ff; }
+      .panel { fill: #071524; stroke: rgba(38, 238, 142, 0.28); }
+      .card { fill: rgba(255,255,255,0.08); stroke: rgba(255,255,255,0.14); }
+      .small { font-size: 18px; }
+      .label { font-size: 17px; font-weight: 700; }
+      .h1 { font-size: 68px; font-weight: 900; letter-spacing: 0; }
+      .h2 { font-size: 31px; font-weight: 900; }
+      .metric { font-size: 28px; font-weight: 900; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#bg)"/>
+  <rect width="1440" height="900" fill="url(#glowA)"/>
+  <rect width="1440" height="900" fill="url(#glowB)"/>
+
+  <path d="M850 165 C1000 90 1210 155 1390 70 L1440 70 L1440 900 L748 900 C760 728 735 515 850 165Z" fill="#0b2238" opacity="0.58"/>
+  <path d="M760 715 C885 635 1025 724 1140 620 C1246 525 1332 540 1440 455 L1440 900 L710 900Z" fill="#071c29" opacity="0.72"/>
+
+  <g class="font">
+    <g transform="translate(110 32)">
+      <rect width="52" height="52" rx="14" fill="#05d66f"/>
+      <text x="26" y="34" text-anchor="middle" font-size="20" font-weight="900" fill="#06121f">DE</text>
+      <text x="68" y="23" class="white" font-size="28" font-weight="900">Drive</text>
+      <text x="139" y="23" class="green" font-size="28" font-weight="900">Ease</text>
+      <text x="69" y="43" class="muted" font-size="12" font-weight="700">Travel Partner Workspace</text>
+    </g>
+
+    <g transform="translate(820 34)">
+      <rect width="234" height="50" rx="15" fill="#2f86ff"/>
+      <text x="117" y="32" text-anchor="middle" class="white label">Partner Dashboard</text>
+      <rect x="270" width="126" height="50" rx="15" fill="#111d30" stroke="#263a56"/>
+      <text x="333" y="32" text-anchor="middle" class="white label">Profile</text>
+      <rect x="414" width="126" height="50" rx="15" fill="#111d30" stroke="#ff3c55"/>
+      <text x="477" y="32" text-anchor="middle" fill="#ff6575" class="label">Logout</text>
+    </g>
+
+    <g transform="translate(112 214)">
+      <text class="green label" x="0" y="0">Partner demand insights are ready</text>
+      <text class="white h1" x="0" y="78">Grow your travel</text>
+      <text class="white h1" x="0" y="148">business with</text>
+      <text class="green h1" x="0" y="218">verified rides</text>
+      <text class="muted" x="0" y="282" font-size="22">See route demand, fleet performance, customer leads,</text>
+      <text class="muted" x="0" y="317" font-size="22">and upcoming booking opportunities in one partner view.</text>
+
+      <rect x="0" y="364" width="172" height="58" rx="14" fill="#05d66f"/>
+      <text x="86" y="400" text-anchor="middle" fill="#06121f" font-size="17" font-weight="900">View New Leads</text>
+      <rect x="192" y="364" width="184" height="58" rx="14" fill="#0a1527" stroke="#4b6078"/>
+      <text x="284" y="400" text-anchor="middle" class="white" font-size="17" font-weight="800">Manage Vehicles</text>
+
+      <g transform="translate(0 470)">
+        <rect width="164" height="86" rx="16" class="card"/>
+        <text x="18" y="36" class="white metric">42</text>
+        <text x="18" y="64" class="muted" font-size="14">active enquiries</text>
+        <rect x="182" width="164" height="86" rx="16" class="card"/>
+        <text x="200" y="36" class="white metric">18</text>
+        <text x="200" y="64" class="muted" font-size="14">trending routes</text>
+        <rect x="364" width="164" height="86" rx="16" class="card"/>
+        <text x="382" y="36" class="white metric">96%</text>
+        <text x="382" y="64" class="muted" font-size="14">on-time score</text>
+      </g>
+    </g>
+
+    <g transform="translate(780 146)" filter="url(#shadow)">
+      <rect width="548" height="660" rx="24" fill="#071524" stroke="rgba(38, 238, 142, 0.25)"/>
+      <rect x="1" y="1" width="546" height="72" rx="24" fill="#0c1b2d"/>
+      <text x="30" y="45" class="white" font-size="24" font-weight="900">Travel Partner Dashboard</text>
+      <rect x="372" y="20" width="142" height="34" rx="17" fill="#0d3a2a" stroke="#1edc83"/>
+      <circle cx="392" cy="37" r="5" fill="#05df77"/>
+      <text x="452" y="42" text-anchor="middle" class="green" font-size="14" font-weight="800">Live demand</text>
+
+      <g transform="translate(30 96)">
+        <rect width="150" height="86" rx="16" fill="#0a1322" stroke="#253954"/>
+        <text x="18" y="30" class="muted" font-size="14">Open leads</text>
+        <text x="18" y="64" class="white" font-size="32" font-weight="900">24</text>
+        <rect x="166" width="150" height="86" rx="16" fill="#0a1322" stroke="#253954"/>
+        <text x="184" y="30" class="muted" font-size="14">Vehicles free</text>
+        <text x="184" y="64" class="white" font-size="32" font-weight="900">11</text>
+        <rect x="332" width="156" height="86" rx="16" fill="#0a1322" stroke="#253954"/>
+        <text x="350" y="30" class="muted" font-size="14">Today scope</text>
+        <text x="350" y="64" class="white" font-size="30" font-weight="900">₹24k</text>
+      </g>
+
+      <g transform="translate(30 206)">
+        <text class="white" font-size="19" font-weight="900">New customer requests</text>
+        <rect y="24" width="488" height="92" rx="16" fill="#0a1322" stroke="#253954"/>
+        <circle cx="34" cy="70" r="18" fill="#e9f2ff"/>
+        <text x="34" y="77" text-anchor="middle" fill="#13233c" font-size="15" font-weight="900">AK</text>
+        <text x="66" y="62" class="white" font-size="17" font-weight="850">Airport pickup - Indiranagar</text>
+        <text x="66" y="88" class="muted" font-size="14">Sedan needed today, 7:30 PM</text>
+        <rect x="372" y="50" width="92" height="40" rx="12" fill="#05d66f"/>
+        <text x="418" y="75" text-anchor="middle" fill="#06121f" font-size="14" font-weight="900">Accept</text>
+
+        <rect y="130" width="488" height="92" rx="16" fill="#0a1322" stroke="#253954"/>
+        <circle cx="34" cy="176" r="18" fill="#d8ffe7"/>
+        <text x="34" y="183" text-anchor="middle" fill="#13233c" font-size="15" font-weight="900">RS</text>
+        <text x="66" y="168" class="white" font-size="17" font-weight="850">Corporate day package</text>
+        <text x="66" y="194" class="muted" font-size="14">2 SUVs, 8 hours, driver included</text>
+        <rect x="372" y="156" width="92" height="40" rx="12" fill="#102743" stroke="#2f86ff"/>
+        <text x="418" y="181" text-anchor="middle" class="white" font-size="14" font-weight="900">Review</text>
+      </g>
+
+      <g transform="translate(30 462)">
+        <text class="white" font-size="19" font-weight="900">Route demand</text>
+        <rect y="24" width="488" height="136" rx="16" fill="#0a1322" stroke="#253954"/>
+        <text x="20" y="62" class="muted" font-size="14">Airport - City Center</text>
+        <rect x="190" y="48" width="214" height="16" rx="8" fill="#17263b"/>
+        <rect x="190" y="48" width="182" height="16" rx="8" fill="#05d66f"/>
+        <text x="422" y="64" class="white" font-size="14" font-weight="800">86%</text>
+        <text x="20" y="102" class="muted" font-size="14">Hotel - Event venue</text>
+        <rect x="190" y="88" width="214" height="16" rx="8" fill="#17263b"/>
+        <rect x="190" y="88" width="138" height="16" rx="8" fill="#2f86ff"/>
+        <text x="422" y="104" class="white" font-size="14" font-weight="800">64%</text>
+        <text x="20" y="142" class="muted" font-size="14">Outstation weekend</text>
+        <rect x="190" y="128" width="214" height="16" rx="8" fill="#17263b"/>
+        <rect x="190" y="128" width="112" height="16" rx="8" fill="#f6c85f"/>
+        <text x="422" y="144" class="white" font-size="14" font-weight="800">52%</text>
+      </g>
+
+      <g transform="translate(30 646)">
+        <rect width="488" height="1" fill="#24364f"/>
+        <text x="0" y="28" class="muted" font-size="14">Recommended next step</text>
+        <text x="0" y="56" class="white" font-size="19" font-weight="900">Add 2 sedans online before 6 PM</text>
+        <rect x="356" y="18" width="132" height="42" rx="13" fill="#2f86ff"/>
+        <text x="422" y="44" text-anchor="middle" class="white" font-size="14" font-weight="900">Update fleet</text>
+      </g>
+    </g>
+  </g>
+</svg>

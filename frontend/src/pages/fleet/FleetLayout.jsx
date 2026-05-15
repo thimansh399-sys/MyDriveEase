@@ -14,6 +14,10 @@ export default function FleetLayout() {
       path: '/fleet/bookings',
     },
     {
+      label: 'My Cabs',
+      path: '/fleet/vehicles',
+    },
+    {
       label: 'My Bookings',
       path: '/fleet/my-bookings',
     },

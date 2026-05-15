@@ -40,6 +40,7 @@ const AdminDashboard = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef();
   const [charts, setCharts] = useState({ ridesPerDay: [], revenuePerDay: [] });
+  const [controlRoom, setControlRoom] = useState({ items: [], summary: {} });
   const [selectedChart, setSelectedChart] = useState('ridesPerDay');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -94,6 +95,8 @@ const AdminDashboard = () => {
         const res = await api.get('/admin/dashboard');
         setStats(res.data.stats || {});
         setCharts(res.data.charts || { ridesPerDay: [], revenuePerDay: [] });
+        const controlRes = await api.get('/admin/control-room');
+        setControlRoom(controlRes.data || { items: [], summary: {} });
       } catch (err) {
         setError('Failed to fetch dashboard data.');
       } finally {
@@ -285,6 +288,66 @@ const AdminDashboard = () => {
             <span className="text-2xl font-extrabold text-black dark:text-white">{stats[stat.key] ?? 0}</span>
           </motion.div>
         ))}
+      </div>
+      <div className="bg-card dark:bg-[#111827] rounded-2xl p-6 shadow border border-border max-w-5xl mx-auto mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+          <div>
+            <h2 className="text-2xl font-extrabold text-primary">Pending Booking Control Room</h2>
+            <p className="text-sm text-gray-400 mt-1">
+              Catch stuck bookings before customers drop off.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <span className="px-3 py-1 rounded-full bg-yellow-500/15 text-yellow-200 border border-yellow-400/30">
+              Pending: {controlRoom.summary?.pending || 0}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-red-500/15 text-red-200 border border-red-400/30">
+              5+ min: {controlRoom.summary?.stale || 0}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-blue-500/15 text-blue-200 border border-blue-400/30">
+              No supply: {controlRoom.summary?.noSupply || 0}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-3">
+          {(controlRoom.items || []).slice(0, 5).map((item) => (
+            <div key={item._id} className="rounded-2xl bg-[#0b1220] border border-[#243041] p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                      item.ageMinutes >= 5 ? 'bg-red-500 text-white' : 'bg-yellow-400 text-black'
+                    }`}>
+                      {item.ageMinutes} min pending
+                    </span>
+                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-green-500/15 text-green-200">
+                      {item.matchingVehicles} vehicles
+                    </span>
+                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-200">
+                      {item.matchingPartners} partners
+                    </span>
+                  </div>
+                  <p className="text-white font-bold truncate">{item.pickup?.address}</p>
+                  <p className="text-gray-400 text-sm truncate mt-1">To {item.drop?.address}</p>
+                  <p className="text-gray-500 text-xs mt-2">
+                    Customer: {item.customer?.name || 'N/A'} {item.customer?.phone ? `| ${item.customer.phone}` : ''}
+                  </p>
+                </div>
+                <div className="text-left lg:text-right">
+                  <p className="text-primary font-extrabold">Rs {item.fare?.total || 0}</p>
+                  <p className="text-xs text-gray-400 mt-1">{item.dispatchTarget} | {item.carType}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {(controlRoom.items || []).length === 0 && (
+            <div className="rounded-2xl bg-[#0b1220] border border-dashed border-[#243041] p-8 text-center text-gray-400">
+              No pending bookings right now.
+            </div>
+          )}
+        </div>
       </div>
       <div className="bg-card dark:bg-[#111827] rounded-2xl p-6 shadow border border-border max-w-2xl mx-auto">
         <div className="flex gap-4 mb-4 justify-center">

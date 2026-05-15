@@ -12,8 +12,11 @@ const setupSocket = require('./socket');
 // ROUTES
 const authRoutes = require('./routes/auth');
 const fleetAuthRoutes = require('./routes/fleetAuth');
+const fleetRoutes = require('./routes/fleet');
 const driverRoutes = require('./routes/drivers');
 const bookingRoutes = require('./routes/bookings');
+const paymentRoutes = require('./routes/payments');
+const adminRoutes = require('./routes/admin');
 
 // ❌ REMOVE THIS LINE
 // const driverAuthRoutes = require('./routes/driverAuth');
@@ -103,13 +106,8 @@ app.use('/api/', limiter);
 // USER + DRIVER AUTH
 app.use('/api/auth', authRoutes);
 
-// FLEET OWNER AUTH (currently not implemented)
-app.use('/api/fleet-auth', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Fleet auth routes are not implemented in this version',
-  });
-});
+// FLEET OWNER AUTH
+app.use('/api/fleet-auth', fleetAuthRoutes);
 
 // DRIVER ROUTES
 app.use('/api/drivers', driverRoutes);
@@ -117,13 +115,14 @@ app.use('/api/drivers', driverRoutes);
 // BOOKINGS
 app.use('/api/bookings', bookingRoutes);
 
-// FLEET ROUTES (currently not implemented)
-app.use('/api/fleet', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Fleet routes are not implemented in this version',
-  });
-});
+// FLEET ROUTES
+app.use('/api/fleet', fleetRoutes);
+
+// PAYMENTS
+app.use('/api/payments', paymentRoutes);
+
+// ADMIN
+app.use('/api/admin', adminRoutes);
 
 
 

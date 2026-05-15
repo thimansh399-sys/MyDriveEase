@@ -35,7 +35,10 @@ router.post('/login', async (req, res) => {
     if (role === 'driver') {
       user = await Driver.findOne({ phone }).select('+password');
     } else {
-      user = await User.findOne({ phone }).select('+password');
+      user = await User.findOne({
+        phone,
+        ...(role === 'admin' ? { role: 'admin' } : {}),
+      }).select('+password');
     }
 
     if (!user) {
@@ -54,7 +57,11 @@ router.post('/login', async (req, res) => {
 
     const token = signToken(
       user._id,
-      role === 'driver' ? 'driver' : 'user'
+      role === 'driver'
+        ? 'driver'
+        : role === 'admin'
+        ? 'admin'
+        : 'user'
     );
 
     res.json({
@@ -64,7 +71,12 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: role === 'driver' ? 'driver' : 'user',
+        role:
+          role === 'driver'
+            ? 'driver'
+            : role === 'admin'
+            ? 'admin'
+            : 'user',
       },
     });
 

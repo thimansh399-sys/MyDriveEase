@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,7 +10,91 @@ import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 
+const PENDING_BOOKING_KEY = "driveease_pending_booking";
+
+const isValidCoords = (coords) =>
+  Array.isArray(coords) &&
+  coords.length === 2 &&
+  coords.every((value) => Number.isFinite(Number(value))) &&
+  !(Number(coords[0]) === 0 && Number(coords[1]) === 0);
+
+const calculateFallbackDistance = (pickupCoords, dropCoords) => {
+  if (!isValidCoords(pickupCoords) || !isValidCoords(dropCoords)) return 10;
+
+  const [pLng, pLat] = pickupCoords.map(Number);
+  const [dLng, dLat] = dropCoords.map(Number);
+  const toRad = (value) => (value * Math.PI) / 180;
+  const radius = 6371;
+  const dLatRad = toRad(dLat - pLat);
+  const dLngRad = toRad(dLng - pLng);
+  const a =
+    Math.sin(dLatRad / 2) ** 2 +
+    Math.cos(toRad(pLat)) * Math.cos(toRad(dLat)) * Math.sin(dLngRad / 2) ** 2;
+
+  return Number((radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(2));
+};
+
+const resolveLocation = async (address, coords) => {
+  if (isValidCoords(coords)) return coords.map(Number);
+
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}, India&countrycodes=in&addressdetails=1&limit=1`
+  );
+  const [place] = await res.json();
+
+  if (!place) return coords;
+
+  return [parseFloat(place.lon), parseFloat(place.lat)];
+};
+
+const getRouteEstimate = async (pickupCoords, dropCoords) => {
+  if (!isValidCoords(pickupCoords) || !isValidCoords(dropCoords)) {
+    const distance = calculateFallbackDistance(pickupCoords, dropCoords);
+    return {
+      distance,
+      duration: Math.ceil(distance * 3),
+    };
+  }
+
+  const [pLng, pLat] = pickupCoords;
+  const [dLng, dLat] = dropCoords;
+  const response = await fetch(
+    `https://router.project-osrm.org/route/v1/driving/${pLng},${pLat};${dLng},${dLat}?overview=false`
+  );
+  const data = await response.json();
+  const route = data.routes?.[0];
+
+  if (!route) {
+    const distance = calculateFallbackDistance(pickupCoords, dropCoords);
+    return {
+      distance,
+      duration: Math.ceil(distance * 3),
+    };
+  }
+
+  return {
+    distance: Number((route.distance / 1000).toFixed(2)),
+    duration: Math.ceil(route.duration / 60),
+  };
+};
+
+const calculateFare = (distance, carType) => {
+  let perKm = 11;
+  let baseFare = 900;
+
+  if (carType === "ertiga") {
+    perKm = 14;
+    baseFare = 1100;
+  } else if (carType === "innova") {
+    perKm = 17;
+    baseFare = 1200;
+  }
+
+  return Math.round(baseFare + distance * perKm);
+};
+
 export default function BookingBox() {
+  const { user } = useAuth();
 
   const [tripType, setTripType] = useState("oneway");
   const [carType, setCarType] = useState("wagonr");
@@ -88,46 +173,46 @@ export default function BookingBox() {
       return alert("Enter Drop Location");
     }
 
-    let perKm = 11;
-    let baseFare = 900;
-
-    if (carType === "ertiga") {
-      perKm = 14;
-      baseFare = 1100;
-    }
-
-    else if (carType === "innova") {
-      perKm = 17;
-      baseFare = 1200;
-    }
-
-    let distance = Math.floor(Math.random() * 40) + 10;
-
-    let fare = baseFare + distance * perKm;
-
     setLoading(true);
 
     try {
+      const finalPickupCoords = await resolveLocation(pickup, pickupCoords);
+      const finalDropCoords = await resolveLocation(drop, dropCoords);
+      const estimate = await getRouteEstimate(finalPickupCoords, finalDropCoords);
+      const fare = calculateFare(estimate.distance, carType);
 
-      await api.post("/bookings/create", {
-
+      const bookingPayload = {
         pickup: {
           address: pickup,
-          coordinates: pickupCoords,
+          coordinates: finalPickupCoords,
         },
         drop: {
           address: drop,
-          coordinates: dropCoords,
+          coordinates: finalDropCoords,
         },
         tripType,
         carType,
-        distance,
+        dispatchTarget: "fleet",
+        distance: estimate.distance,
+        duration: estimate.duration,
         fare: {
           total: fare,
         },
         date: selectedDate,
         time: selectedTime,
-      });
+      };
+
+      if (!user) {
+        localStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify(bookingPayload));
+        navigate("/login", {
+          state: {
+            continueBooking: true,
+          },
+        });
+        return;
+      }
+
+      await api.post("/bookings/create", bookingPayload);
 
       navigate("/my-rides");
 

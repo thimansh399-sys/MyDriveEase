@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import api from '../utils/api';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-
+import { CheckCircle2, Clipboard, IndianRupee, ReceiptText, Upload } from 'lucide-react';
+import api from '../utils/api';
+import { formatCurrency } from '../utils/helpers';
 
 const PAYMENT_DETAILS = {
   name: 'HIMANSHU SINGH',
@@ -10,141 +12,250 @@ const PAYMENT_DETAILS = {
   bank: 'KOTAK BANK',
   upi: '7007515654@kotak',
 };
-const upiUrl = `upi://pay?pa=${PAYMENT_DETAILS.upi}&pn=${encodeURIComponent(PAYMENT_DETAILS.name)}&cu=INR`;
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
 const PaymentGateway = () => {
-  const [copied, setCopied] = useState(false);
-  const [file, setFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [success, setSuccess] = useState(null);
+  const [searchParams] = useSearchParams();
+  const bookingId = searchParams.get('bookingId');
+  const [booking, setBooking] = useState(null);
+  const [payment, setPayment] = useState(null);
   const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [reference, setReference] = useState('');
+  const [file, setFile] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(Boolean(bookingId));
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState('');
 
-  // Fetch payment history with auto-refresh
+  const amount = booking?.fare?.total || payment?.amount || 0;
+  const upiUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      pa: PAYMENT_DETAILS.upi,
+      pn: PAYMENT_DETAILS.name,
+      am: String(amount || ''),
+      cu: 'INR',
+      tn: bookingId ? `DriveEase booking ${bookingId}` : 'DriveEase ride payment',
+    });
+    return `upi://pay?${params.toString()}`;
+  }, [amount, bookingId]);
+
   useEffect(() => {
-    let interval;
-    const fetchHistory = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await api.get('/payments/my');
-        setHistory(res.data);
+        if (bookingId) {
+          const res = await api.get(`/payments/booking/${bookingId}`);
+          setBooking(res.data.booking);
+          setPayment(res.data.payment);
+          setReference(res.data.payment?.reference || '');
+        }
+
+        const historyRes = await api.get('/payments/my');
+        setHistory(historyRes.data || []);
       } catch {
-        setHistory([]);
+        setMessage('Payment details could not be loaded.');
       } finally {
         setLoading(false);
       }
     };
-    fetchHistory();
-    interval = setInterval(fetchHistory, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
+    fetchData();
+  }, [bookingId]);
+
+  const handleCopy = async (text) => {
+    await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
+
+    if (!bookingId) {
+      setMessage('Open payment from a booking to submit proof.');
+      return;
+    }
+
     setUploading(true);
-    setSuccess(null);
+    setMessage('');
+
     try {
-      const formData = new FormData();
-      formData.append('screenshot', file);
-      await api.post('/payments/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setSuccess('Screenshot uploaded!');
+      const screenshotData = file ? await fileToDataUrl(file) : '';
+      const res = await api.post('/payments/upload', {
+        bookingId,
+        reference,
+        screenshotData,
+        screenshotName: file?.name || '',
+      });
+
+      setPayment(res.data.payment);
       setFile(null);
-    } catch {
-      setSuccess('Failed to upload.');
+      setMessage('Payment proof submitted. Admin will verify it soon.');
+    } catch (err) {
+      setMessage(err?.response?.data?.message || 'Failed to submit payment proof.');
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a1019] via-[#0f172a] to-[#1e293b] flex flex-col items-center py-8 px-2">
-      {/* Hero Section */}
-      <div className="w-full max-w-2xl mx-auto flex flex-col items-center mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" rx="8" fill="#19e68c" opacity="0.15"/><rect x="8" y="12" width="16" height="8" rx="4" fill="#19e68c"/></svg>
-          <span className="text-3xl md:text-4xl font-extrabold text-white"><span className="text-[#19e68c]">DriveEase</span> Payment</span>
-        </div>
-        <div className="text-[#a7f3d0] text-lg mb-6 text-center">Secure & fast payment for your ride</div>
-      </div>
-      {/* Amount Card */}
-      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#19e68c] shadow-xl p-8 flex flex-col items-center mb-8">
-        <div className="text-[#a7f3d0] font-semibold mb-2 tracking-wide">AMOUNT TO PAY</div>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[#19e68c] text-3xl font-extrabold">₹</span>
-          <span className="text-3xl font-extrabold text-white">0</span>
-        </div>
-        <input type="text" className="w-full mt-2 px-4 py-2 rounded-lg bg-[#181f2a] border border-[#232c3a] text-white text-center font-semibold focus:outline-none focus:border-[#19e68c]" placeholder="Enter Booking ID / Reference" />
-      </div>
-      {/* Payment Methods */}
-      <div className="w-full max-w-xl mx-auto flex flex-row gap-4 mb-8">
-        <div className="flex-1 bg-[#101624] rounded-2xl border-2 border-[#19e68c] p-4 flex flex-col items-center relative">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#19e68c] text-[#0a1019] text-xs font-bold px-3 py-1 rounded-full shadow tracking-wide border-2 border-white/20">Recommended</div>
-          <svg width="28" height="28" fill="none" viewBox="0 0 28 28" className="mb-2"><rect x="4" y="8" width="20" height="12" rx="6" fill="#19e68c" opacity="0.15"/><rect x="8" y="12" width="12" height="4" rx="2" fill="#19e68c"/></svg>
-          <div className="font-bold text-white">UPI</div>
-        </div>
-        <div className="flex-1 bg-[#101624] rounded-2xl border-2 border-[#232c3a] p-4 flex flex-col items-center relative">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#19e68c] text-[#0a1019] text-xs font-bold px-3 py-1 rounded-full shadow tracking-wide border-2 border-white/20">Fastest</div>
-          <svg width="28" height="28" fill="none" viewBox="0 0 28 28"><rect x="4" y="4" width="20" height="20" rx="10" fill="#a7f3d0" opacity="0.15"/><rect x="8" y="8" width="12" height="12" rx="6" fill="#a7f3d0"/></svg>
-          <div className="font-bold text-white">Scan QR</div>
-        </div>
-        <div className="flex-1 bg-[#101624] rounded-2xl border-2 border-[#232c3a] p-4 flex flex-col items-center">
-          <svg width="28" height="28" fill="none" viewBox="0 0 28 28"><rect x="4" y="8" width="20" height="12" rx="6" fill="#a7f3d0" opacity="0.15"/><rect x="8" y="12" width="12" height="4" rx="2" fill="#a7f3d0"/></svg>
-          <div className="font-bold text-white">Bank Transfer</div>
-        </div>
-      </div>
-      {/* UPI ID Section */}
-      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#232c3a] shadow p-6 flex flex-col items-center mb-8">
-        <div className="w-full flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
-          <div>
-            <div className="text-[#a7f3d0] text-xs font-semibold">UPI ID</div>
-            <div className="text-[#19e68c] font-extrabold text-lg md:text-xl">{PAYMENT_DETAILS.upi}</div>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1019] via-[#0f172a] to-[#1e293b] px-4 py-8 text-white">
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="rounded-3xl border border-green-400/20 bg-[#101624] p-6 shadow-2xl shadow-black/20">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-green-500/15 text-green-300">
+              <IndianRupee size={30} />
+            </div>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-green-300">DriveEase Payment</p>
+              <h1 className="text-3xl font-black">Secure ride payment</h1>
+            </div>
           </div>
-          <button
-            className="bg-[#19e68c] text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#16a34a] transition"
-            onClick={() => handleCopy(PAYMENT_DETAILS.upi)}
-          >
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
-        <div className="w-full flex flex-row gap-2 justify-center mb-2">
-          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
-            <span className="text-[#19e68c] font-bold">G</span>
-          </a>
-          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
-            <span className="text-[#a259ff] font-bold">P</span>
-          </a>
-          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
-            <span className="text-[#19e68c] font-bold">₹</span>
-          </a>
-          <a href={upiUrl} className="flex-1 bg-[#232c3a] rounded-lg p-3 flex flex-col items-center hover:bg-[#19e68c]/10 transition">
-            <span className="text-[#0a1019] font-bold">U</span>
-          </a>
-        </div>
-      </div>
-      {/* QR Code Section */}
-      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#232c3a] shadow p-6 flex flex-col items-center mb-8">
-        <span className="text-[#19e68c] font-semibold mb-2">Scan to Pay (UPI QR)</span>
-        <QRCodeSVG value={upiUrl} size={160} bgColor="#111827" fgColor="#19e68c" includeMargin={true} />
-      </div>
-      {/* Bank Details Section */}
-      <div className="w-full max-w-xl mx-auto bg-[#101624] rounded-2xl border border-[#232c3a] shadow p-6 flex flex-col items-center mb-8">
-        <div className="w-full flex flex-col gap-2">
-          <div className="text-[#a7f3d0] text-xs font-semibold">Account Name</div>
-          <div className="text-white font-bold">{PAYMENT_DETAILS.name}</div>
-          <div className="text-[#a7f3d0] text-xs font-semibold mt-2">Account Number</div>
-          <div className="text-white font-bold">{PAYMENT_DETAILS.account}</div>
-          <div className="text-[#a7f3d0] text-xs font-semibold mt-2">IFSC</div>
-          <div className="text-white font-bold">{PAYMENT_DETAILS.ifsc}</div>
-          <div className="text-[#a7f3d0] text-xs font-semibold mt-2">Bank</div>
-          <div className="text-white font-bold">{PAYMENT_DETAILS.bank}</div>
-        </div>
+
+          {loading ? (
+            <div className="rounded-2xl bg-slate-900 p-6 text-slate-300">Loading payment details...</div>
+          ) : (
+            <>
+              <div className="rounded-3xl border border-green-400/20 bg-green-500/10 p-6 text-center">
+                <p className="text-sm font-bold uppercase tracking-wide text-green-200">Amount to pay</p>
+                <p className="mt-2 text-5xl font-black text-white">{formatCurrency(amount || 0)}</p>
+                <p className="mt-3 text-sm text-slate-300">
+                  {bookingId ? `Booking ID: ${bookingId}` : 'Select a booking from My Rides to auto-fill amount.'}
+                </p>
+                {payment?.status && (
+                  <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/15 px-4 py-2 text-sm font-bold text-blue-100">
+                    <CheckCircle2 size={16} />
+                    {payment.status}
+                  </span>
+                )}
+              </div>
+
+              {booking && (
+                <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
+                  <p className="font-bold text-white">{booking.pickup?.address}</p>
+                  <p className="my-2 text-xs font-bold uppercase tracking-wide text-slate-500">to</p>
+                  <p className="font-bold text-white">{booking.drop?.address}</p>
+                  <p className="mt-3 text-sm text-slate-400">Ride status: {booking.status}</p>
+                </div>
+              )}
+
+              <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">UPI ID</p>
+                    <p className="mt-1 text-xl font-black text-green-300">{PAYMENT_DETAILS.upi}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(PAYMENT_DETAILS.upi)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-green-500 px-4 py-3 font-bold text-black"
+                  >
+                    <Clipboard size={17} />
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-5 sm:grid-cols-[190px_1fr]">
+                <div className="rounded-2xl bg-white p-4">
+                  <QRCodeSVG value={upiUrl} size={158} bgColor="#ffffff" fgColor="#0f172a" includeMargin />
+                </div>
+                <div className="rounded-2xl border border-slate-700 bg-slate-950/50 p-5 text-sm">
+                  <p className="font-bold text-white">Bank transfer</p>
+                  <p className="mt-3 text-slate-300">Name: {PAYMENT_DETAILS.name}</p>
+                  <p className="text-slate-300">Account: {PAYMENT_DETAILS.account}</p>
+                  <p className="text-slate-300">IFSC: {PAYMENT_DETAILS.ifsc}</p>
+                  <p className="text-slate-300">Bank: {PAYMENT_DETAILS.bank}</p>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className="space-y-6">
+          <form onSubmit={handleUpload} className="rounded-3xl border border-slate-700 bg-[#101624] p-6 shadow-2xl shadow-black/20">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/15 text-blue-300">
+                <Upload />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black">Submit payment proof</h2>
+                <p className="text-sm text-slate-400">Add UPI reference or screenshot after payment.</p>
+              </div>
+            </div>
+
+            <label className="mb-4 block">
+              <span className="mb-2 block text-sm font-bold text-slate-300">Reference / UTR</span>
+              <input
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Enter payment reference"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-4 text-white outline-none focus:border-green-400"
+              />
+            </label>
+
+            <label className="mb-5 block">
+              <span className="mb-2 block text-sm font-bold text-slate-300">Screenshot</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-4 text-white"
+              />
+            </label>
+
+            {message && (
+              <div className="mb-5 rounded-2xl border border-green-400/20 bg-green-500/10 px-4 py-3 text-sm font-bold text-green-200">
+                {message}
+              </div>
+            )}
+
+            <button
+              disabled={uploading || !bookingId}
+              className="w-full rounded-2xl bg-green-500 px-5 py-4 font-black text-black transition hover:bg-green-400 disabled:opacity-50"
+            >
+              {uploading ? 'Submitting...' : 'Submit Proof'}
+            </button>
+          </form>
+
+          <div className="rounded-3xl border border-slate-700 bg-[#101624] p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <ReceiptText className="text-green-300" />
+              <h2 className="text-2xl font-black">Payment history</h2>
+            </div>
+
+            <div className="space-y-3">
+              {history.slice(0, 5).map((item) => (
+                <div key={item._id} className="rounded-2xl bg-slate-950/60 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-bold text-white">{formatCurrency(item.amount || 0)}</p>
+                    <span className="rounded-full bg-blue-500/15 px-3 py-1 text-xs font-bold text-blue-100">{item.status}</span>
+                  </div>
+                  <p className="mt-2 truncate text-sm text-slate-400">
+                    {item.bookingId?.pickup?.address || 'Booking'} to {item.bookingId?.drop?.address || 'destination'}
+                  </p>
+                </div>
+              ))}
+
+              {history.length === 0 && (
+                <div className="rounded-2xl bg-slate-950/60 p-5 text-sm text-slate-300">
+                  No payment records yet.
+                </div>
+              )}
+            </div>
+
+            <Link to="/my-rides" className="mt-5 inline-block text-sm font-bold text-green-300 hover:text-green-200">
+              Back to My Rides
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );

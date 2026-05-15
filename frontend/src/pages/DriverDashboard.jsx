@@ -24,6 +24,22 @@ export default function DriverDashboard() {
   const [activeRide, setActiveRide] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const openRideNavigation = (ride) => {
+    const pickupCoords = ride?.pickup?.coordinates || [];
+    const dropCoords = ride?.drop?.coordinates || [];
+    const hasCoords =
+      pickupCoords.length === 2 &&
+      dropCoords.length === 2 &&
+      pickupCoords.every((value) => Number.isFinite(Number(value))) &&
+      dropCoords.every((value) => Number.isFinite(Number(value)));
+
+    const url = hasCoords
+      ? `https://www.google.com/maps/dir/?api=1&origin=${pickupCoords[1]},${pickupCoords[0]}&destination=${dropCoords[1]},${dropCoords[0]}&travelmode=driving`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ride?.pickup?.address || '')}`;
+
+    window.open(url, '_blank');
+  };
+
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -356,12 +372,7 @@ export default function DriverDashboard() {
                     )}
 
                     <button
-                      onClick={() =>
-                        window.open(
-                          `https://maps.google.com`,
-                          '_blank'
-                        )
-                      }
+                      onClick={() => openRideNavigation(activeRide)}
                       className="bg-[#1f2937] px-6 py-4 rounded-2xl font-bold hover:bg-[#2d3748] transition"
                     >
                       Open Navigation
@@ -475,6 +486,12 @@ export default function DriverDashboard() {
                           className="w-full bg-green-500 text-black py-4 rounded-2xl font-extrabold hover:bg-green-400 transition"
                         >
                           Accept Ride
+                        </button>
+                        <button
+                          onClick={() => openRideNavigation(ride)}
+                          className="mt-3 w-full bg-[#243041] text-white py-3 rounded-2xl font-bold hover:bg-[#2d3748] transition"
+                        >
+                          Preview Route
                         </button>
                       </div>
                     </div>

@@ -138,6 +138,12 @@ const MyRides = () => {
                   >
                     View Full Details
                   </Link>
+                  <Link
+                    to={`/payment?bookingId=${ride._id}`}
+                    className="text-xs bg-blue-500 text-white px-4 py-2 rounded-lg font-medium"
+                  >
+                    Pay / Upload Proof
+                  </Link>
                   {ride.status === 'completed' && !ride.rating && (
                     <Link
                       to={`/rate/${ride._id}`}

@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }) => {
   );
 
   setUser(res.data.user);
+  connectSocket(res.data.token);
 
   return res.data.user;
 

@@ -52,6 +52,11 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: 'wagonr',
   },
+  dispatchTarget: {
+    type: String,
+    enum: ['driver', 'fleet'],
+    default: 'driver',
+  },
   date: {
     type: String,
     default: '',
@@ -80,6 +85,11 @@ const bookingSchema = new mongoose.Schema({
   ref: 'Fleet',
   default: null,
 },
+  fleetVehicleId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FleetVehicle',
+    default: null,
+  },
 
   feedback: {
     type: String,

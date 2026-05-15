@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 import {
   Phone,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 const Login = () => {
+  const location = useLocation();
 
   const [form, setForm] = useState({
     phone: '',
@@ -56,8 +58,25 @@ const Login = () => {
         navigate('/driver/dashboard');
 
       } else {
+        const pendingBooking = localStorage.getItem('driveease_pending_booking');
 
-        navigate('/');
+        if (pendingBooking) {
+          try {
+            const bookingPayload = JSON.parse(pendingBooking);
+            await api.post('/bookings/create', bookingPayload);
+            localStorage.removeItem('driveease_pending_booking');
+            navigate('/my-rides');
+            return;
+          } catch (bookingErr) {
+            setError(
+              bookingErr.response?.data?.message ||
+              'Login successful, but booking could not be created. Please try again.'
+            );
+            return;
+          }
+        }
+
+        navigate(location.state?.from?.pathname || '/');
 
       }
 

@@ -121,3 +121,23 @@ body {
 .custom-time-picker .react-time-picker__inputGroup {
   color: white !important;
 }
+
+.fleet-input {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid #374151;
+  background: #1f2937;
+  color: #ffffff;
+  padding: 12px 14px;
+  outline: none;
+}
+
+.fleet-input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+
+.fleet-input::placeholder {
+  color: #9ca3af;
+}

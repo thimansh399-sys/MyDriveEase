@@ -3,6 +3,7 @@ const express = require('express');
 const Booking = require('../models/Booking');
 const Driver = require('../models/Driver');
 const Fleet = require('../models/Fleet');
+const FleetVehicle = require('../models/FleetVehicle');
 
 const { auth, requireRole } = require('../middleware/auth');
 
@@ -15,6 +16,20 @@ const INSURANCE_RATES = {
   none: 0,
   mini: 10,
   premium: 20,
+};
+
+const FLEET_CAR_TYPE_ALIASES = {
+  wagonr: 'hatchback',
+  swift: 'hatchback',
+  ertiga: 'suv',
+  rumion: 'suv',
+  innova: 'innova',
+  'innova-crysta': 'innova',
+};
+
+const normalizeFleetCarType = (carType) => {
+  const value = String(carType || '').trim().toLowerCase();
+  return FLEET_CAR_TYPE_ALIASES[value] || value || 'hatchback';
 };
 
 // ==========================================
@@ -111,6 +126,9 @@ router.get(
 
       const bookings = await Booking.find({
         status: 'pending',
+        dispatchTarget: {
+          $ne: 'fleet',
+        },
         $or: [
           { driverId: null },
           { driverId: req.user.id },
@@ -154,6 +172,7 @@ router.post(
         carType,
         date,
         time,
+        dispatchTarget,
       } = req.body;
 
       if (!pickup || !drop) {
@@ -213,7 +232,14 @@ router.post(
             tripType || 'oneway',
 
           carType:
-            carType || 'wagonr',
+            dispatchTarget === 'fleet'
+              ? normalizeFleetCarType(carType)
+              : carType || 'wagonr',
+
+          dispatchTarget:
+            dispatchTarget === 'fleet'
+              ? 'fleet'
+              : 'driver',
 
           date,
           time,
@@ -232,6 +258,38 @@ router.post(
 
           status: 'pending',
         });
+
+      if (
+        dispatchTarget === 'fleet' &&
+        req.app.get('io')
+      ) {
+        const matchingVehicles = await FleetVehicle.find({
+          status: 'available',
+          carType: normalizeFleetCarType(carType),
+        }).select('fleetId');
+
+        const fleetIds = [
+          ...new Set(
+            matchingVehicles.map((vehicle) =>
+              String(vehicle.fleetId)
+            )
+          ),
+        ];
+
+        fleetIds.forEach((fleetId) => {
+          req.app
+            .get('io')
+            .to(`fleet_${fleetId}`)
+            .emit('new-fleet-booking', {
+              bookingId: booking._id,
+              pickup: booking.pickup,
+              drop: booking.drop,
+              fare: booking.fare?.total || 0,
+              distance: booking.distance,
+              carType: booking.carType,
+            });
+        });
+      }
 
       res
         .status(201)
@@ -370,6 +428,8 @@ router.post(
           tripType: 'driver-only',
 
           carType: 'driver-only',
+
+          dispatchTarget: 'fleet',
 
           date,
           time,
@@ -554,6 +614,10 @@ router.get(
           fleetId: req.user.id,
         })
           .populate(
+            'fleetVehicleId',
+            'carType brand model plateNumber driverName driverPhone perKmRate hourlyRate fullDayRate'
+          )
+          .populate(
             'userId',
             'name phone'
           )
@@ -590,6 +654,8 @@ router.post(
 
     try {
 
+      const { fleetVehicleId } = req.body;
+
       const booking =
         await Booking.findById(
           req.params.id
@@ -616,13 +682,64 @@ router.post(
 
       }
 
+      const vehicleQuery = {
+        fleetId: req.user.id,
+        status: 'available',
+      };
+
+      if (fleetVehicleId) {
+        vehicleQuery._id = fleetVehicleId;
+      } else if (booking.tripType === 'driver-only') {
+        vehicleQuery.carType = 'driver-only';
+      } else if (booking.carType) {
+        vehicleQuery.carType = booking.carType;
+      }
+
+      let vehicle = await FleetVehicle.findOne(vehicleQuery).sort({
+        updatedAt: -1,
+      });
+
+      if (!vehicle && !fleetVehicleId) {
+        vehicle = await FleetVehicle.findOne({
+          fleetId: req.user.id,
+          status: 'available',
+        }).sort({
+          updatedAt: -1,
+        });
+      }
+
+      if (!vehicle) {
+        return res.status(400).json({
+          success: false,
+          message: fleetVehicleId
+            ? 'Selected cab is not available'
+            : 'No available cab found. Mark a cab available first.',
+        });
+      }
+
       booking.fleetId =
         req.user.id;
+
+      booking.fleetVehicleId =
+        vehicle._id;
+
+      if (booking.tripType === 'driver-only') {
+        booking.fare.total =
+          booking.hours >= 24
+            ? vehicle.fullDayRate
+            : (vehicle.hourlyRate || 0) * Math.max(booking.hours || 1, 1);
+      } else if (booking.distance) {
+        booking.fare.total =
+          (vehicle.perKmRate || 0) * booking.distance;
+      }
 
       booking.status =
         'fleet-accepted';
 
       await booking.save();
+
+      vehicle.status = 'busy';
+      await vehicle.save();
 
       if (req.app.get('io')) {
 
@@ -644,6 +761,124 @@ router.post(
                 booking.status,
             }
           );
+      }
+
+      return res.json({
+        success: true,
+        booking,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Server error',
+      });
+
+    }
+  }
+);
+
+// ==========================================
+// FLEET COMPLETE BOOKING
+// ==========================================
+
+router.post(
+  '/fleet/:id/complete',
+  auth,
+  requireRole('fleet'),
+  async (req, res) => {
+
+    try {
+
+      const booking = await Booking.findOne({
+        _id: req.params.id,
+        fleetId: req.user.id,
+      });
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: 'Booking not found',
+        });
+      }
+
+      booking.status = 'completed';
+      await booking.save();
+
+      if (booking.fleetVehicleId) {
+        await FleetVehicle.findOneAndUpdate(
+          {
+            _id: booking.fleetVehicleId,
+            fleetId: req.user.id,
+          },
+          {
+            status: 'available',
+          }
+        );
+      }
+
+      return res.json({
+        success: true,
+        booking,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Server error',
+      });
+
+    }
+  }
+);
+
+// ==========================================
+// FLEET CANCEL ACCEPTED BOOKING
+// ==========================================
+
+router.post(
+  '/fleet/:id/cancel',
+  auth,
+  requireRole('fleet'),
+  async (req, res) => {
+
+    try {
+
+      const booking = await Booking.findOne({
+        _id: req.params.id,
+        fleetId: req.user.id,
+      });
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: 'Booking not found',
+        });
+      }
+
+      const vehicleId = booking.fleetVehicleId;
+
+      booking.fleetId = null;
+      booking.fleetVehicleId = null;
+      booking.status = 'pending';
+      await booking.save();
+
+      if (vehicleId) {
+        await FleetVehicle.findOneAndUpdate(
+          {
+            _id: vehicleId,
+            fleetId: req.user.id,
+          },
+          {
+            status: 'available',
+          }
+        );
       }
 
       return res.json({
@@ -1091,16 +1326,69 @@ router.get(
 
     try {
 
-      const bookings = await Booking.find({
+      const availableVehicles = await FleetVehicle.find({
+        fleetId: req.user.id,
+        status: 'available',
+      }).select('carType serviceCity');
+
+      if (availableVehicles.length === 0) {
+        return res.json({
+          success: true,
+          bookings: [],
+        });
+      }
+
+      const carTypes = [
+        ...new Set(
+          availableVehicles
+            .map((vehicle) => vehicle.carType)
+            .filter(Boolean)
+        ),
+      ];
+
+      const bookingQuery = {
         status: 'pending',
-        tripType: 'driver-only',
-      }).sort({
+        fleetId: null,
+        $or: [
+          { dispatchTarget: 'fleet' },
+          { carType: { $in: carTypes } },
+          { carType: 'driver-only' },
+          { tripType: 'driver-only' },
+        ],
+      };
+
+      const bookings = await Booking.find(bookingQuery).sort({
         createdAt: -1,
       });
 
+      const serviceCities = [
+        ...new Set(
+          availableVehicles
+            .map((vehicle) =>
+              String(vehicle.serviceCity || '').trim().toLowerCase()
+            )
+            .filter(Boolean)
+        ),
+      ];
+
+      const hasAllCityVehicle =
+        availableVehicles.some(
+          (vehicle) => !String(vehicle.serviceCity || '').trim()
+        );
+
+      const filteredBookings =
+        hasAllCityVehicle || serviceCities.length === 0
+          ? bookings
+          : bookings.filter((booking) => {
+              const address = `${booking.pickup?.address || ''} ${booking.drop?.address || ''}`.toLowerCase();
+              return serviceCities.some((city) =>
+                address.includes(city)
+              );
+            });
+
       res.json({
         success: true,
-        bookings,
+        bookings: filteredBookings,
       });
 
     } catch (err) {
@@ -1142,6 +1430,10 @@ router.get(
           .populate(
             'fleetId',
             'companyName ownerName phone'
+          )
+          .populate(
+            'fleetVehicleId',
+            'carType brand model plateNumber driverName driverPhone perKmRate hourlyRate fullDayRate'
           );
 
       if (!booking) {

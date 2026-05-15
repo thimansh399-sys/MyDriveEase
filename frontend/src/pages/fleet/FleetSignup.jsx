@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import api from '../../utils/api';
 import {
   Building2,
   User,
@@ -14,12 +14,16 @@ import {
 } from 'lucide-react';
 
 const FleetSignup = () => {
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     companyName: '',
     ownerName: '',
     email: '',
     phone: '',
     password: '',
+    city: '',
     address: '',
   });
 
@@ -32,11 +36,13 @@ const FleetSignup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
       // Backend register call
-      const res = await axios.post(
-        '/api/fleet-auth/register',
+      const res = await api.post(
+        '/fleet-auth/register',
         form
       );
 
@@ -52,10 +58,16 @@ const FleetSignup = () => {
 
       window.location.href = '/fleet/dashboard';
     } catch (err) {
-      alert(
+      const message =
         err?.response?.data?.message ||
-          'Signup failed'
-      );
+        err?.response?.data?.error ||
+        err?.message ||
+        'Signup failed';
+
+      setError(message);
+      alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -150,6 +162,11 @@ const FleetSignup = () => {
               onSubmit={handleSubmit}
               className="space-y-6"
             >
+              {error && (
+                <div className="rounded-2xl border border-red-400/40 bg-red-500/15 px-5 py-4 text-sm font-bold text-red-200">
+                  {error}
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-5">
 
@@ -196,6 +213,14 @@ const FleetSignup = () => {
 
                 <InputField
                   icon={<MapPin size={20} />}
+                  name="city"
+                  placeholder="City"
+                  value={form.city}
+                  onChange={handleChange}
+                />
+
+                <InputField
+                  icon={<MapPin size={20} />}
                   name="address"
                   placeholder="Office Address"
                   value={form.address}
@@ -205,9 +230,10 @@ const FleetSignup = () => {
 
               <button
                 type="submit"
-                className="w-full h-16 rounded-2xl bg-green-500 text-black font-black text-xl hover:scale-[1.02] transition-all shadow-2xl shadow-green-500/20"
+                disabled={loading}
+                className="w-full h-16 rounded-2xl bg-green-500 text-black font-black text-xl hover:scale-[1.02] transition-all shadow-2xl shadow-green-500/20 disabled:opacity-60"
               >
-                Create Partner Account
+                {loading ? 'Creating account...' : 'Create Partner Account'}
               </button>
 
               <p className="text-center text-gray-400">
