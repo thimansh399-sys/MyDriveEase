@@ -12,10 +12,19 @@ const fleetSchema = new mongoose.Schema(
       required: true,
     },
 
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     phone: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
 
     password: {
@@ -25,7 +34,7 @@ const fleetSchema = new mongoose.Schema(
 
     city: {
       type: String,
-      required: true,
+      default: '',
     },
 
     address: String,

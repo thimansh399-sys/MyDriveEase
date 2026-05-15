@@ -109,13 +109,8 @@ app.use('/api/', limiter);
 // USER + DRIVER AUTH
 app.use('/api/auth', authRoutes);
 
-// FLEET OWNER AUTH (currently not implemented)
-app.use('/api/fleet-auth', (req, res) => {
-  res.status(501).json({
-    success: false,
-    message: 'Fleet auth routes are not implemented in this version',
-  });
-});
+// FLEET OWNER AUTH
+app.use('/api/fleet-auth', fleetAuthRoutes);
 
 // DRIVER ROUTES
 app.use('/api/drivers', driverRoutes);

@@ -7,6 +7,12 @@ const { JWT_SECRET } = require('../config');
 
 const router = express.Router();
 
+const serializeFleet = (fleet) => {
+  const data = fleet.toObject();
+  delete data.password;
+  return data;
+};
+
 // ===============================
 // REGISTER
 // ===============================
@@ -20,12 +26,20 @@ router.post('/register', async (req, res) => {
       email,
       phone,
       password,
+      city,
       address,
     } = req.body;
 
+    if (!companyName || !ownerName || !email || !phone || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company name, owner name, email, phone and password are required',
+      });
+    }
+
     // CHECK EXISTING
     const existingFleet = await Fleet.findOne({
-      $or: [{ email }, { phone }],
+      $or: [{ email: email.toLowerCase().trim() }, { phone: phone.trim() }],
     });
 
     if (existingFleet) {
@@ -45,9 +59,10 @@ router.post('/register', async (req, res) => {
     const fleet = await Fleet.create({
       companyName,
       ownerName,
-      email,
-      phone,
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
       password: hashedPassword,
+      city: city || '',
       address,
       role: 'fleet',
       status: 'online',
@@ -68,7 +83,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      fleet,
+      fleet: serializeFleet(fleet),
     });
   } catch (err) {
     console.log(err);
@@ -87,8 +102,15 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password required',
+      });
+    }
+
     const fleet = await Fleet.findOne({
-      email,
+      email: email.toLowerCase().trim(),
     });
 
     if (!fleet) {
@@ -124,7 +146,7 @@ router.post('/login', async (req, res) => {
     res.json({
       success: true,
       token,
-      fleet,
+      fleet: serializeFleet(fleet),
     });
   } catch (err) {
     console.log(err);
