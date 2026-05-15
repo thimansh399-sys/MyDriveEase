@@ -129,7 +129,7 @@ export default function BookingBox() {
         time: selectedTime,
       });
 
-      navigate("/bookings/success");
+      navigate("/my-rides");
 
     } catch (err) {
 

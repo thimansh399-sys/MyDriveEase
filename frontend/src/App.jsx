@@ -14,7 +14,14 @@ import RateRide from './pages/RateRide';
 import LiveMap from './pages/LiveMap';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfileDashboard from './pages/ProfileDashboard';
+import FleetLayout from './pages/fleet/FleetLayout';
+import FleetDashboardPage from './pages/fleet/FleetDashboardPage';
+import FleetBookingsPage from './pages/fleet/FleetBookingsPage';
+import FleetMyBookingsPage from './pages/fleet/FleetMyBookingsPage';
+import FleetProfilePage from './pages/fleet/FleetProfilePage';
 
+import FleetLogin from './pages/fleet/FleetLogin';
+import FleetSignup from './pages/fleet/FleetSignup';
 import PaymentGateway from './pages/PaymentGateway';
 import Plans from './pages/Plans';
 import Insurance from './pages/Insurance';
@@ -38,7 +45,16 @@ const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!user) {
+    const loginPath =
+      role === 'driver'
+        ? '/driver/login'
+        : role === 'fleet'
+        ? '/fleet/login'
+        : '/login';
+
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
+  }
   if (role && user.role !== role) return <Navigate to="/" />;
   return children;
 };
@@ -57,6 +73,8 @@ function AppRoutes() {
       <Route path="/hire-driver" element={<HireDriver />} />
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+      <Route path="/fleet/login" element={<FleetLogin />} />
+      <Route path="/fleet/signup" element={<FleetSignup />} />
 
       {/* Dedicated Driver Login Route */}
       <Route path="/driver/login" element={<GuestRoute><DriverLogin /></GuestRoute>} />
@@ -93,6 +111,34 @@ function AppRoutes() {
         <Route path="earnings" element={<DriverEarningsPage />} />
         <Route path="profile" element={<DriverProfilePage />} />
       </Route>
+<Route
+  path="/fleet"
+  element={
+    <ProtectedRoute role="fleet">
+      <FleetLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route
+    path="dashboard"
+    element={<FleetDashboardPage />}
+  />
+
+  <Route
+    path="bookings"
+    element={<FleetBookingsPage />}
+  />
+
+  <Route
+    path="my-bookings"
+    element={<FleetMyBookingsPage />}
+  />
+
+  <Route
+    path="profile"
+    element={<FleetProfilePage />}
+  />
+</Route>
 
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />

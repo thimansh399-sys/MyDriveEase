@@ -69,6 +69,10 @@ export default function HireDriver() {
       return alert("Enter pickup");
     }
 
+    if (!drop) {
+      return alert("Enter drop");
+    }
+
     setLoading(true);
 
     try {

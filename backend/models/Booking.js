@@ -44,9 +44,29 @@ const bookingSchema = new mongoose.Schema({
     },
     total: { type: Number, default: 0 },
   },
+  tripType: {
+    type: String,
+    default: 'oneway',
+  },
+  carType: {
+    type: String,
+    default: 'wagonr',
+  },
+  date: {
+    type: String,
+    default: '',
+  },
+  time: {
+    type: String,
+    default: '',
+  },
+  hours: {
+    type: Number,
+    default: 0,
+  },
   status: {
     type: String,
-    enum: ['pending', 'accepted', 'arriving', 'in-progress', 'completed', 'cancelled'],
+    enum: ['pending', 'accepted', 'fleet-accepted', 'arriving', 'in-progress', 'completed', 'cancelled'],
     default: 'pending',
   },
   rating: {

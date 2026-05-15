@@ -26,13 +26,22 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (phone, password, role) => {
+  const login = async (phoneOrPayload, passwordArg, roleArg) => {
+
+  const credentials =
+    typeof phoneOrPayload === 'object'
+      ? phoneOrPayload
+      : {
+          phone: phoneOrPayload,
+          password: passwordArg,
+          role: roleArg,
+        };
 
   const res = await api.post('/auth/login', {
 
-    phone,
-    password,
-    role,
+    phone: credentials.phone,
+    password: credentials.password,
+    role: credentials.role,
 
   });
 
@@ -56,7 +65,7 @@ export const AuthProvider = ({ children }) => {
   const signup = async (data) => {
     const res = await api.post('/auth/signup', data);
     // Only return user data, do not set token/user
-    return res.data.user;
+    return res.data.user || res.data.driver;
   };
 
   const logout = () => {
