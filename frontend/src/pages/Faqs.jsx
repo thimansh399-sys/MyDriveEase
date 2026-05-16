@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Faqs = () => {
   const faqs = [
@@ -39,9 +40,9 @@ const Faqs = () => {
           ))}
         </div>
         <div className="text-center mt-16">
-          <a href="/" className="inline-block bg-primary text-black px-8 py-4 rounded-2xl font-bold text-lg hover:bg-green-400 transition-all">
+          <Link to="/" className="inline-block bg-primary text-black px-8 py-4 rounded-2xl font-bold text-lg hover:bg-green-400 transition-all">
             Book Your Ride Now
-          </a>
+          </Link>
         </div>
       </div>
     </div>

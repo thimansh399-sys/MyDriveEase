@@ -7,6 +7,7 @@ const navItems = [
   { label: 'Dashboard', to: 'dashboard', icon: LayoutDashboard },
   { label: 'Bookings', to: 'bookings', icon: Receipt },
   { label: 'My Bookings', to: 'my-bookings', icon: Truck },
+  { label: 'Cabs', to: 'vehicles', icon: Car },
   { label: 'Profile', to: 'profile', icon: User },
 ];
 

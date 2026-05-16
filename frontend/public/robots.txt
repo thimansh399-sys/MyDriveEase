@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mydriveease.in/sitemap.xml

@@ -17,6 +17,9 @@ const driverRoutes = require('./routes/drivers');
 const bookingRoutes = require('./routes/bookings');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
+const userRoutes = require('./routes/users');
+const subscriptionRoutes = require('./routes/subscriptions');
+const reviewRoutes = require('./routes/reviews');
 
 // ❌ REMOVE THIS LINE
 // const driverAuthRoutes = require('./routes/driverAuth');
@@ -143,6 +146,15 @@ app.use('/api/payments', paymentRoutes);
 
 // ADMIN
 app.use('/api/admin', adminRoutes);
+
+// USERS
+app.use('/api/users', userRoutes);
+
+// SUBSCRIPTIONS
+app.use('/api/subscriptions', subscriptionRoutes);
+
+// REVIEWS
+app.use('/api/reviews', reviewRoutes);
 
 
 

@@ -7,6 +7,20 @@ body {
   margin: 0;
   background: linear-gradient(135deg, #101924 0%, #18222f 60%, #1a3a2c 100%);
   color: #e5e7eb;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 .bg-primary {

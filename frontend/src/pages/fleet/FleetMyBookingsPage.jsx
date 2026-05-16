@@ -45,7 +45,7 @@ export default function FleetMyBookingsPage() {
 
   const completeBooking = async (id) => {
     try {
-      await api.post(`/bookings/${id}/complete`);
+      await api.post(`/bookings/fleet/${id}/complete`);
       setBookings((prev) => prev.filter((b) => b._id !== id && b.id !== id));
     } catch (err) {
       // keep UI simple

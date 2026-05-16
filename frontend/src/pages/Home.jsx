@@ -570,17 +570,17 @@ export default function Home() {
 
         <div>
           <h3 className="mb-2 font-bold">Quick Links</h3>
-          <a href="/" className="block hover:text-green-400">Home</a>
-          <a href="/drivers" className="block hover:text-green-400">Drivers</a>
-          <a href="/book" className="block hover:text-green-400">Book Ride</a>
-          <a href="/plans" className="block hover:text-green-400">Plans</a>
+          <Link to="/" className="block hover:text-green-400">Home</Link>
+          <Link to="/drivers" className="block hover:text-green-400">Drivers</Link>
+          <Link to="/book" className="block hover:text-green-400">Book Ride</Link>
+          <Link to="/plans" className="block hover:text-green-400">Plans</Link>
         </div>
 
         <div>
           <h3 className="mb-2 font-bold">Support</h3>
-          <a href="/faqs" className="block hover:text-green-400">FAQs</a>
-          <a href="/terms" className="block hover:text-green-400">Terms & Conditions</a>
-          <a href="/privacy" className="block hover:text-green-400">Privacy Policy</a>
+          <Link to="/faqs" className="block hover:text-green-400">FAQs</Link>
+          <Link to="/terms" className="block hover:text-green-400">Terms & Conditions</Link>
+          <Link to="/privacy" className="block hover:text-green-400">Privacy Policy</Link>
         </div>
 
         <div>

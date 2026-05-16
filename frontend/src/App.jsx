@@ -3,6 +3,9 @@ import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import NotificationList from './components/NotificationList';
+import MobileAppNav from './components/MobileAppNav';
+import SEO from './components/SEO';
+import WhatsAppButton from './components/WhatsAppButton';
 import useNotifications from './hooks/useNotifications';
 import { getSocket } from './utils/socket';
 import Home from './pages/Home';
@@ -23,6 +26,7 @@ import FleetDashboardPage from './pages/fleet/FleetDashboardPage';
 import FleetBookingsPage from './pages/fleet/FleetBookingsPage';
 import FleetMyBookingsPage from './pages/fleet/FleetMyBookingsPage';
 import FleetProfilePage from './pages/fleet/FleetProfilePage';
+import FleetVehiclesPage from './pages/fleet/FleetVehiclesPage';
 
 import FleetLogin from './pages/fleet/FleetLogin';
 import FleetSignup from './pages/fleet/FleetSignup';
@@ -75,6 +79,13 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/hire-driver" element={<HireDriver />} />
+      <Route path="/booking" element={<Navigate to="/book" replace />} />
+      <Route path="/book-ride" element={<Navigate to="/book" replace />} />
+      <Route path="/my-trips" element={<Navigate to="/my-rides" replace />} />
+      <Route path="/driver-signup" element={<Navigate to="/signup?role=driver" replace />} />
+      <Route path="/travel-partner" element={<Navigate to="/fleet/signup" replace />} />
+      <Route path="/travel-partner/signup" element={<Navigate to="/fleet/signup" replace />} />
+      <Route path="/travel-partner/login" element={<Navigate to="/fleet/login" replace />} />
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
 
@@ -111,6 +122,7 @@ function AppRoutes() {
       >
         <Route path="dashboard" element={<DriverDashboardPage />} />
         <Route path="ride-requests" element={<DriverRideRequestsPage />} />
+        <Route path="rides" element={<Navigate to="/driver/my-rides" replace />} />
         <Route path="my-rides" element={<DriverMyRidesPage />} />
         <Route path="earnings" element={<DriverEarningsPage />} />
         <Route path="profile" element={<DriverProfilePage />} />
@@ -128,6 +140,8 @@ function AppRoutes() {
         <Route path="dashboard" element={<FleetDashboardPage />} />
         <Route path="bookings" element={<FleetBookingsPage />} />
         <Route path="my-bookings" element={<FleetMyBookingsPage />} />
+        <Route path="cabs" element={<Navigate to="/fleet/vehicles" replace />} />
+        <Route path="vehicles" element={<FleetVehiclesPage />} />
         <Route path="profile" element={<FleetProfilePage />} />
       </Route>
 
@@ -195,10 +209,13 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <SEO />
         <SocketNotificationBridge addNotification={addNotification} />
-        <div className="min-h-screen bg-gray-50 dark:bg-[#0a1019]">
+        <div className="min-h-screen bg-gray-50 pb-24 dark:bg-[#0a1019] lg:pb-0">
           <Navbar />
           <AppRoutes />
+          <WhatsAppButton />
+          <MobileAppNav />
           <NotificationList notifications={notifications} />
         </div>
       </AuthProvider>

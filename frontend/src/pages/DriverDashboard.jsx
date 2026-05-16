@@ -12,6 +12,7 @@ import {
   IndianRupee,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
@@ -195,19 +196,19 @@ export default function DriverDashboard() {
             </div>
 
             <div className="flex gap-4 flex-wrap">
-              <a
-                href="/driver/profile"
+              <Link
+                to="/driver/profile"
                 className="bg-black text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
               >
                 Profile
-              </a>
+              </Link>
 
-              <a
-                href="/driver/rides"
+              <Link
+                to="/driver/my-rides"
                 className="bg-white text-black px-6 py-3 rounded-2xl font-bold hover:scale-105 transition"
               >
                 Ride History
-              </a>
+              </Link>
             </div>
           </div>
         </div>

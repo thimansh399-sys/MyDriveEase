@@ -7,11 +7,15 @@ import {
   Menu,
   X,
   User,
+  UserPlus,
   LogOut,
   Car,
   LayoutDashboard,
   ChevronDown,
   Truck,
+  LogIn,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -110,6 +114,51 @@ const Navbar = () => {
             label: 'My Trips',
           },
         ];
+
+  const mobileAccessCards = [
+    {
+      title: 'Customer',
+      subtitle: 'Book and track trusted drivers',
+      icon: User,
+      tone: 'green',
+      loginTo: '/login',
+      signupTo: '/signup',
+    },
+    {
+      title: 'Driver',
+      subtitle: 'Accept rides and manage earnings',
+      icon: ShieldCheck,
+      tone: 'slate',
+      loginTo: '/driver/login',
+      signupTo: '/signup?role=driver',
+    },
+    {
+      title: 'Travel Partner',
+      subtitle: 'Manage cabs, leads, and bookings',
+      icon: Truck,
+      tone: 'blue',
+      loginTo: '/fleet/login',
+      signupTo: '/fleet/signup',
+    },
+  ];
+
+  const mobileCardTone = {
+    green: {
+      icon: 'bg-green-400 text-slate-950',
+      signup: 'bg-green-400 text-slate-950 hover:bg-green-300',
+      border: 'border-green-400/25',
+    },
+    blue: {
+      icon: 'bg-blue-500 text-white',
+      signup: 'bg-blue-500 text-white hover:bg-blue-400',
+      border: 'border-blue-400/25',
+    },
+    slate: {
+      icon: 'bg-slate-700 text-white',
+      signup: 'bg-white text-slate-950 hover:bg-slate-200',
+      border: 'border-white/10',
+    },
+  };
 
   return (
     <motion.nav
@@ -448,32 +497,52 @@ const Navbar = () => {
               opacity: 0,
               y: -15,
             }}
-            className="lg:hidden bg-[#0b1220] border-t border-[#1f2937]"
+            className="lg:hidden border-t border-white/10 bg-[#07111f]/98 shadow-2xl shadow-black/40 backdrop-blur-xl"
           >
-            <div className="px-5 py-5 flex flex-col gap-4">
-              {navLinks.map((link) => {
-                const isActive =
-                  location.pathname === link.to;
+            <div className="max-h-[calc(100vh-74px)] overflow-y-auto px-4 py-5 pb-28">
+              <div className="mb-5 rounded-[24px] border border-green-400/20 bg-gradient-to-br from-green-400/14 via-slate-900 to-blue-500/10 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-green-400 text-slate-950 shadow-lg shadow-green-500/20">
+                    <Sparkles size={21} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-white">
+                      DriveEase access
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-300">
+                      Book rides, join as a driver, or manage travel partner leads from one clean panel.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                return (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className={`px-4 py-3 rounded-xl font-semibold transition ${
-                      isActive
-                        ? 'bg-green-500 text-black'
-                        : 'text-gray-300 hover:bg-[#182235] hover:text-white'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
+              {navLinks.length > 0 && (
+                <div className="mb-5 grid grid-cols-2 gap-2">
+                  {navLinks.slice(0, 4).map((link) => {
+                    const isActive =
+                      location.pathname === link.to;
 
-              <div className="border-t border-[#1f2937] pt-4 flex flex-col gap-4">
+                    return (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        onClick={() =>
+                          setOpen(false)
+                        }
+                        className={`min-h-11 rounded-2xl px-3 py-3 text-center text-sm font-bold transition ${
+                          isActive
+                            ? 'bg-green-400 text-slate-950'
+                            : 'border border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/10'
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="space-y-3">
                 {user ? (
                   <>
                     {user?.role ===
@@ -483,8 +552,9 @@ const Navbar = () => {
                         onClick={() =>
                           setOpen(false)
                         }
-                        className="px-4 py-3 rounded-xl bg-green-500 text-black font-bold text-center"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-green-400 px-4 py-4 text-sm font-black text-slate-950"
                       >
+                        <LayoutDashboard size={18} />
                         Driver Dashboard
                       </Link>
                     )}
@@ -496,8 +566,9 @@ const Navbar = () => {
                         onClick={() =>
                           setOpen(false)
                         }
-                        className="px-4 py-3 rounded-xl bg-blue-500 text-white font-bold text-center"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-blue-500 px-4 py-4 text-sm font-black text-white"
                       >
+                        <Truck size={18} />
                         Travel Partner Dashboard
 
                       </Link>
@@ -505,72 +576,64 @@ const Navbar = () => {
 
                     <button
                       onClick={handleLogout}
-                      className="px-4 py-3 rounded-xl border border-red-500 text-red-400 font-semibold"
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-4 text-sm font-bold text-red-200"
                     >
+                      <LogOut size={18} />
                       Logout
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/login"
-                      onClick={() =>
-                        setOpen(false)
-                      }
-                      className="px-4 py-3 rounded-xl bg-[#182235] text-white text-center font-semibold"
-                    >
-                      Customer Login
-                    </Link>
+                    {mobileAccessCards.map((card) => {
+                      const Icon = card.icon;
+                      const tone = mobileCardTone[card.tone];
 
-                    <Link
-                      to="/driver/login"
-                      onClick={() =>
-                        setOpen(false)
-                      }
-                      className="px-4 py-3 rounded-xl bg-[#182235] text-white text-center font-semibold"
-                    >
-                      Driver Login
-                    </Link>
+                      return (
+                        <div
+                          key={card.title}
+                          className={`rounded-[24px] border ${tone.border} bg-white/[0.045] p-3 shadow-xl shadow-black/10`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${tone.icon}`}>
+                              <Icon size={22} />
+                            </div>
 
-                    <Link
-                      to="/fleet/login"
-                      onClick={() =>
-                        setOpen(false)
-                      }
-                      className="px-4 py-3 rounded-xl border border-blue-400/40 text-blue-200 text-center font-bold"
-                    >
-                        Travel Partner Login
-                    </Link>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-black text-white">
+                                {card.title}
+                              </p>
+                              <p className="mt-0.5 text-xs leading-5 text-slate-400">
+                                {card.subtitle}
+                              </p>
+                            </div>
+                          </div>
 
-                    <Link
-                      to="/signup"
-                      onClick={() =>
-                        setOpen(false)
-                      }
-                      className="px-4 py-3 rounded-xl bg-green-500 text-black text-center font-bold"
-                    >
-                      Customer Signup
-                    </Link>
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <Link
+                              to={card.loginTo}
+                              onClick={() =>
+                                setOpen(false)
+                              }
+                              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-slate-100 transition hover:bg-white/10"
+                            >
+                              <LogIn size={16} />
+                              Login
+                            </Link>
 
-                    <Link
-                      to="/signup?role=driver"
-                      onClick={() =>
-                        setOpen(false)
-                      }
-                      className="px-4 py-3 rounded-xl bg-[#182235] text-white text-center font-semibold"
-                    >
-                      Driver Signup
-                    </Link>
-
-                    <Link
-                      to="/fleet/signup"
-                      onClick={() =>
-                        setOpen(false)
-                      }
-                      className="px-4 py-3 rounded-xl bg-blue-500 text-white text-center font-bold"
-                    >
-                        Travel Partner Signup
-                      </Link>
+                            <Link
+                              to={card.signupTo}
+                              onClick={() =>
+                                setOpen(false)
+                              }
+                              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-black transition ${tone.signup}`}
+                            >
+                              <UserPlus size={16} />
+                              Signup
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </>
                 )}
               </div>

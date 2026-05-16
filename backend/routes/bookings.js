@@ -598,7 +598,7 @@ router.get('/fleet/available', auth, requireRole('fleet'), async (req, res) => {
   try {
     const bookings = await Booking.find({
       status: 'pending',
-      tripType: 'driver-only',
+      dispatchTarget: 'fleet',
     }).sort({ createdAt: -1 });
 
     res.json({ success: true, bookings });

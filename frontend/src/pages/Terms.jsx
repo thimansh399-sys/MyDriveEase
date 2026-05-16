@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Terms = () => {
   return (
@@ -31,9 +32,9 @@ const Terms = () => {
         </div>
         <div className="text-center mt-12">
           <p className="text-gray-400 mb-6">Last updated: December 2024</p>
-          <a href="/" className="inline-block bg-primary text-black px-8 py-4 rounded-2xl font-bold hover:bg-green-400 transition-all">
+          <Link to="/" className="inline-block bg-primary text-black px-8 py-4 rounded-2xl font-bold hover:bg-green-400 transition-all">
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

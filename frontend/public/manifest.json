@@ -1,23 +1,27 @@
 {
   "short_name": "DriveEase",
-  "name": "DriveEase - Book Professional Drivers",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
+  "name": "DriveEase - Hire Trusted Drivers",
+  "description": "Book verified professional drivers and manage travel partner rides with DriveEase.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0a1019",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "background_color": "#07111f",
   "theme_color": "#19e68c",
   "orientation": "portrait-primary",
-  "scope": "/",
-  "description": "Book professional drivers and rides with DriveEase. Premium, modern, and mobile-first."
+  "categories": ["travel", "transportation", "business"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
 }

@@ -35,7 +35,7 @@ export default function FleetBookingsPage() {
 
   const acceptBooking = async (id) => {
     try {
-      await api.post(`/bookings/${id}/accept`);
+      await api.post(`/bookings/fleet/${id}/accept`);
       setBookings((prev) => prev.filter((b) => (b?._id || b?.id) !== id));
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to accept booking');

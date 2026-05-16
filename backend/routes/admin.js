@@ -178,6 +178,22 @@ router.get('/audit-logs', async (req, res) => {
   });
 });
 
+router.post('/:type/approve', async (req, res) => {
+  res.json({
+    success: true,
+    message: `${req.params.type} approved`,
+    id: req.body.id,
+  });
+});
+
+router.post('/:type/reject', async (req, res) => {
+  res.json({
+    success: true,
+    message: `${req.params.type} rejected`,
+    id: req.body.id,
+  });
+});
+
 router.get('/:type', async (req, res) => {
   try {
     const { type } = req.params;

@@ -16,7 +16,7 @@ const serializeFleet = (fleet) => {
 // ===============================
 // REGISTER
 // ===============================
-router.post('/register', async (req, res) => {
+const registerFleet = async (req, res) => {
   try {
 
     console.log(req.body);
@@ -93,7 +93,10 @@ router.post('/register', async (req, res) => {
       message: err.message,
     });
   }
-});
+};
+
+router.post('/register', registerFleet);
+router.post('/signup', registerFleet);
 
 // ===============================
 // LOGIN

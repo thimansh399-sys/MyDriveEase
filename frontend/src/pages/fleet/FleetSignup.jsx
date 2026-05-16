@@ -28,7 +28,7 @@ export default function FleetSignup() {
     setLoading(true);
 
     try {
-      await api.post('/fleet-auth/signup', formData);
+      await api.post('/fleet-auth/register', formData);
       window.location.href = '/fleet/login';
     } catch (err) {
       setError(err?.response?.data?.message || 'Signup failed');

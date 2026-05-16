@@ -458,6 +458,40 @@ router.post(
 // ==========================================
 
 router.get(
+  '/me',
+  auth,
+  requireRole('driver'),
+  async (req, res) => {
+
+    try {
+
+      const driver = await Driver.findById(
+        req.user.id
+      ).select('-password');
+
+      if (!driver) {
+
+        return res.status(404).json({
+          message: 'Driver not found',
+        });
+
+      }
+
+      res.json(driver);
+
+    } catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+        message: 'Server error',
+      });
+
+    }
+  }
+);
+
+router.get(
   '/profile',
   auth,
   requireRole('driver'),
