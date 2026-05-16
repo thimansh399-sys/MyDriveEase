@@ -25,6 +25,25 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  aadhaarNumber: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  aadhaarImage: {
+    type: String,
+    default: '',
+  },
+  kycStatus: {
+    type: String,
+    enum: ['pending', 'submitted', 'verified', 'rejected'],
+    default: 'pending',
+  },
+  kycNotes: {
+    type: String,
+    default: '',
+    maxlength: 500,
+  },
   role: {
     type: String,
     enum: ['user', 'driver', 'admin'],

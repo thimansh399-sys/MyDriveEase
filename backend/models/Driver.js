@@ -80,6 +80,18 @@ const driverSchema = new mongoose.Schema(
       default: '',
     },
 
+    kycStatus: {
+      type: String,
+      enum: ['pending', 'submitted', 'verified', 'rejected'],
+      default: 'pending',
+    },
+
+    kycNotes: {
+      type: String,
+      default: '',
+      maxlength: 500,
+    },
+
     // =========================
     // DRIVER STATUS
     // =========================

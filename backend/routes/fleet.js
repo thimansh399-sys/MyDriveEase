@@ -1,6 +1,7 @@
 const express = require('express');
 
 const Booking = require('../models/Booking');
+const Fleet = require('../models/Fleet');
 const FleetVehicle = require('../models/FleetVehicle');
 const { auth, requireRole } = require('../middleware/auth');
 
@@ -19,6 +20,63 @@ const normalizeVehiclePayload = (body) => ({
   driverName: body.driverName || '',
   driverPhone: body.driverPhone || '',
   status: body.status || 'available',
+});
+
+router.get('/dashboard', auth, requireRole('fleet'), async (req, res) => {
+  try {
+    const fleetId = req.user.id;
+
+    const [profile, vehicles, availableBookings, myBookings] = await Promise.all([
+      Fleet.findById(fleetId).select('-password').lean(),
+      FleetVehicle.find({ fleetId }).sort({ createdAt: -1 }).lean(),
+      Booking.find({ status: 'pending', dispatchTarget: 'fleet' })
+        .populate('userId', 'name phone')
+        .sort({ createdAt: -1 })
+        .limit(12)
+        .lean(),
+      Booking.find({ fleetId })
+        .populate('userId', 'name phone')
+        .populate('fleetVehicleId', 'carType brand model plateNumber driverName driverPhone')
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean(),
+    ]);
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Fleet profile not found',
+      });
+    }
+
+    const activeStatuses = ['fleet-accepted', 'arriving', 'in-progress'];
+    const completedBookings = myBookings.filter((booking) => booking.status === 'completed');
+
+    res.json({
+      success: true,
+      profile,
+      stats: {
+        availableLeads: availableBookings.length,
+        acceptedBookings: myBookings.length,
+        activeBookings: myBookings.filter((booking) => activeStatuses.includes(booking.status)).length,
+        completedBookings: completedBookings.length,
+        revenue: completedBookings.reduce((sum, booking) => sum + Number(booking.fare?.total || 0), 0),
+        totalCabs: vehicles.length,
+        availableCabs: vehicles.filter((vehicle) => vehicle.status === 'available').length,
+        busyCabs: vehicles.filter((vehicle) => vehicle.status === 'busy').length,
+        offlineCabs: vehicles.filter((vehicle) => vehicle.status === 'offline').length,
+      },
+      vehicles,
+      availableBookings,
+      myBookings,
+    });
+  } catch (err) {
+    console.log('FLEET DASHBOARD ERROR =>', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
 });
 
 router.get('/vehicles', auth, requireRole('fleet'), async (req, res) => {

@@ -140,6 +140,11 @@ router.post('/create', auth, requireRole('user'), async (req, res) => {
 
       fare: {
         total: typeof fare === 'number' ? fare : fare?.total || 0,
+        subtotal: typeof fare === 'number' ? fare : fare?.subtotal || fare?.total || 0,
+        discount: typeof fare === 'number' ? 0 : fare?.discount || 0,
+        planName: typeof fare === 'number' ? 'BASIC' : fare?.planName || 'BASIC',
+        insurance: typeof fare === 'number' ? 0 : fare?.insurance || 0,
+        insurancePlan: req.body.insurancePlan || fare?.insurancePlan || 'none',
       },
 
       driverId: driverId || null,

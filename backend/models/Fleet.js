@@ -48,6 +48,18 @@ const fleetSchema = new mongoose.Schema(
       default: false,
     },
 
+    kycStatus: {
+      type: String,
+      enum: ['pending', 'submitted', 'verified', 'rejected'],
+      default: 'pending',
+    },
+
+    kycNotes: {
+      type: String,
+      default: '',
+      maxlength: 500,
+    },
+
     rating: {
       type: Number,
       default: 5,

@@ -48,6 +48,9 @@ const bookingSchema = new mongoose.Schema(
         enum: ['none', 'mini', 'premium'],
         default: 'none',
       },
+      subtotal: { type: Number, default: 0 },
+      discount: { type: Number, default: 0 },
+      planName: { type: String, default: 'BASIC' },
       total: { type: Number, default: 0 },
     },
 

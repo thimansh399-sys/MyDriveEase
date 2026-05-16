@@ -16,11 +16,24 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    const requestUrl = err.config?.url || '';
+    const isFleetRequest =
+      requestUrl.startsWith('/fleet') ||
+      requestUrl.startsWith('/fleet-auth') ||
+      requestUrl.startsWith('/bookings/fleet');
+
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.location.href = isFleetRequest ? '/fleet/login' : '/login';
     }
+
+    if (err.response?.status === 403 && isFleetRequest) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/fleet/login';
+    }
+
     return Promise.reject(err);
   }
 );

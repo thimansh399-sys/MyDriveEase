@@ -18,6 +18,7 @@ import MyRides from './pages/MyTrips';
 import RateRide from './pages/RateRide';
 import LiveMap from './pages/LiveMap';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './pages/AdminLogin';
 import ProfileDashboard from './pages/ProfileDashboard';
 import UserProfile from './pages/UserProfile';
 
@@ -56,6 +57,8 @@ const ProtectedRoute = ({ children, role }) => {
     const loginPath =
       role === 'driver'
         ? '/driver/login'
+        : role === 'admin'
+          ? '/admin/login'
         : role === 'fleet'
           ? '/fleet/login'
           : '/login';
@@ -93,6 +96,7 @@ function AppRoutes() {
       <Route path="/fleet/signup" element={<FleetSignup />} />
 
       <Route path="/driver/login" element={<GuestRoute><DriverLogin /></GuestRoute>} />
+      <Route path="/admin/login" element={<AdminLogin />} />
 
       {/* User Routes */}
       <Route path="/drivers" element={<ProtectedRoute role="user"><Drivers /></ProtectedRoute>} />
@@ -203,21 +207,32 @@ function SocketNotificationBridge({ addNotification }) {
   return null;
 }
 
+function AppShell({ notifications, addNotification }) {
+  const location = useLocation();
+  const isAdminDashboard = location.pathname === '/admin/dashboard';
+
+  return (
+    <>
+      <SEO />
+      <SocketNotificationBridge addNotification={addNotification} />
+      <div className={`min-h-screen bg-gray-50 dark:bg-[#0a1019] ${isAdminDashboard ? '' : 'pb-24 lg:pb-0'}`}>
+        {!isAdminDashboard && <Navbar />}
+        <AppRoutes />
+        {!isAdminDashboard && <WhatsAppButton />}
+        {!isAdminDashboard && <MobileAppNav />}
+        {!isAdminDashboard && <NotificationList notifications={notifications} />}
+      </div>
+    </>
+  );
+}
+
 function App() {
   const { notifications, addNotification } = useNotifications();
 
   return (
     <BrowserRouter>
       <AuthProvider>
-        <SEO />
-        <SocketNotificationBridge addNotification={addNotification} />
-        <div className="min-h-screen bg-gray-50 pb-24 dark:bg-[#0a1019] lg:pb-0">
-          <Navbar />
-          <AppRoutes />
-          <WhatsAppButton />
-          <MobileAppNav />
-          <NotificationList notifications={notifications} />
-        </div>
+        <AppShell notifications={notifications} addNotification={addNotification} />
       </AuthProvider>
     </BrowserRouter>
   );
