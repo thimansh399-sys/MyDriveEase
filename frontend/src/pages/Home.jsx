@@ -40,6 +40,7 @@ export default function Home() {
   });
   const canBookRide = !user || user.role === "user";
   const isFleetUser = user?.role === "fleet";
+  const isDriverUser = user?.role === "driver";
 
   const fleetStats = useMemo(() => {
     const vehicles = fleetHome.vehicles || [];
@@ -58,6 +59,8 @@ export default function Home() {
         `${fleetStats.totalCabs} total cabs`,
         `${fleetStats.availableCabs} cabs ready`,
       ]
+    : isDriverUser
+    ? ["Online/offline control", "Live ride requests", "Earnings tracking", "Profile readiness"]
     : ["Verified Drivers", "Quick Scheduling", "24/7 Support", "Transparent Pricing"];
 
   const previewAvailableBookings = fleetHome.availableBookings.slice(0, 2);
@@ -185,10 +188,10 @@ export default function Home() {
         <div className="absolute left-20 top-20 h-72 w-72 rounded-full bg-green-500/20 blur-[120px]"></div>
         <div className="absolute bottom-16 right-16 h-72 w-72 rounded-full bg-blue-500/20 blur-[120px]"></div>
 
-        <div className={`relative z-10 mx-auto grid w-full max-w-7xl gap-12 items-center ${canBookRide || isFleetUser ? "lg:grid-cols-[1.05fr_0.95fr]" : "md:grid-cols-1"}`}>
+        <div className={`relative z-10 mx-auto grid w-full max-w-7xl gap-12 items-center ${canBookRide || isFleetUser || isDriverUser ? "lg:grid-cols-[1.05fr_0.95fr]" : "md:grid-cols-1"}`}>
           <div className={isFleetUser ? "max-w-3xl" : "max-w-2xl"}>
             <p className="mb-4 font-semibold text-green-400">
-              {isFleetUser ? "Travel partner demand insights are ready." : "Safe. Reliable. Always On Time."}
+              {isFleetUser ? "Travel partner demand insights are ready." : isDriverUser ? "Driver workspace is ready." : "Safe. Reliable. Always On Time."}
             </p>
 
             <h1 className="text-5xl font-extrabold leading-tight md:text-6xl">
@@ -197,6 +200,12 @@ export default function Home() {
                   Grow your travel business,
                   <br />
                   <span className="text-green-400">with verified ride demand</span>
+                </>
+              ) : isDriverUser ? (
+                <>
+                  Drive smarter,
+                  <br />
+                  <span className="text-green-400">earn with confidence</span>
                 </>
               ) : (
                 <>
@@ -210,6 +219,8 @@ export default function Home() {
             <p className="mt-6 text-lg text-gray-300">
               {isFleetUser
                 ? "Track incoming customer requests, fleet readiness, route demand, and the next best action from one focused partner home screen."
+                : isDriverUser
+                ? "Manage your online status, accept ride requests, review earnings, and keep documents ready from your driver console."
                 : "Hire professional drivers for local and outstation travel. Safe, verified, and trusted by thousands."}
             </p>
 
@@ -227,6 +238,21 @@ export default function Home() {
                     className="rounded-xl border border-gray-500 px-6 py-3 transition hover:border-green-400"
                   >
                     Manage Vehicles
+                  </Link>
+                </>
+              ) : isDriverUser ? (
+                <>
+                  <Link
+                    to="/driver/dashboard"
+                    className="rounded-xl bg-green-500 px-6 py-3 font-semibold text-slate-950 shadow-lg transition hover:bg-green-400"
+                  >
+                    Open Driver Dashboard
+                  </Link>
+                  <Link
+                    to="/driver/ride-requests"
+                    className="rounded-xl border border-gray-500 px-6 py-3 transition hover:border-green-400"
+                  >
+                    View Requests
                   </Link>
                 </>
               ) : (
@@ -392,6 +418,47 @@ export default function Home() {
                       Update fleet
                     </Link>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isDriverUser && (
+            <div className="flex w-full justify-center lg:justify-end">
+              <div className="w-full max-w-xl rounded-[28px] border border-emerald-400/20 bg-[#071524]/85 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-extrabold text-white">Driver command center</h2>
+                    <p className="mt-1 text-sm text-slate-400">Quick access for daily driving work.</p>
+                  </div>
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300">
+                    {user?.status || "offline"}
+                  </span>
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <Link to="/driver/dashboard" className="rounded-2xl border border-slate-700 bg-[#0a1322] p-4 hover:border-emerald-400">
+                    <p className="text-sm text-slate-400">Today</p>
+                    <p className="mt-2 text-xl font-extrabold text-white">Status and requests</p>
+                  </Link>
+                  <Link to="/driver/earnings" className="rounded-2xl border border-slate-700 bg-[#0a1322] p-4 hover:border-emerald-400">
+                    <p className="text-sm text-slate-400">Money</p>
+                    <p className="mt-2 text-xl font-extrabold text-white">Track earnings</p>
+                  </Link>
+                  <Link to="/driver/my-rides" className="rounded-2xl border border-slate-700 bg-[#0a1322] p-4 hover:border-emerald-400">
+                    <p className="text-sm text-slate-400">History</p>
+                    <p className="mt-2 text-xl font-extrabold text-white">Completed rides</p>
+                  </Link>
+                  <Link to="/driver/profile" className="rounded-2xl border border-slate-700 bg-[#0a1322] p-4 hover:border-emerald-400">
+                    <p className="text-sm text-slate-400">Documents</p>
+                    <p className="mt-2 text-xl font-extrabold text-white">Update profile</p>
+                  </Link>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                  <p className="text-sm font-semibold text-emerald-200">
+                    Tip: keep your city, area, Aadhaar, and driving license updated so operations can assign trips faster.
+                  </p>
                 </div>
               </div>
             </div>

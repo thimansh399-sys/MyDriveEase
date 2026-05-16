@@ -249,7 +249,7 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* PROFILE */}
+              {/* PROFILE / DASHBOARD */}
               <Link
                 to={
                   user?.role === 'driver'
@@ -260,13 +260,13 @@ const Navbar = () => {
                 }
                 className="px-5 py-2.5 rounded-2xl bg-[#182235] border border-[#243041] text-white font-semibold hover:border-green-400 hover:text-green-400 transition flex items-center gap-2"
               >
-                <User size={18} />
+                {user?.role === 'user' ? <LayoutDashboard size={18} /> : <User size={18} />}
 
                 {user?.role === 'driver'
                   ? 'Driver Profile'
                   : user?.role === 'fleet'
                   ? 'Travel Partner Profile'
-                  : 'Profile'}
+                  : 'Dashboard'}
               </Link>
 
               {/* LOGOUT */}

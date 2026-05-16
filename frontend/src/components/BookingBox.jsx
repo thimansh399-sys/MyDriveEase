@@ -9,6 +9,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
+import { applyCustomerPlanToFare, getSelectedCustomerPlan } from '../utils/pricingPlans';
 
 const PENDING_BOOKING_KEY = 'driveease_pending_booking';
 
@@ -118,6 +119,7 @@ export default function BookingBox() {
   const [selectedTime, setSelectedTime] = useState('10:00');
 
   const navigate = useNavigate();
+  const selectedPlan = getSelectedCustomerPlan();
 
   const searchLocation = async (query, type) => {
     if (query.length < 3) {
@@ -159,7 +161,8 @@ export default function BookingBox() {
       const finalPickupCoords = await resolveLocation(pickup, pickupCoords);
       const finalDropCoords = await resolveLocation(drop, dropCoords);
       const estimate = await getRouteEstimate(finalPickupCoords, finalDropCoords);
-      const fare = calculateFare(estimate.distance, carType);
+      const selectedPlan = getSelectedCustomerPlan();
+      const fareBreakdown = applyCustomerPlanToFare(calculateFare(estimate.distance, carType), selectedPlan);
 
       const bookingPayload = {
         pickup: {
@@ -175,7 +178,12 @@ export default function BookingBox() {
         dispatchTarget: 'fleet',
         distance: estimate.distance,
         duration: estimate.duration,
-        fare: { total: fare },
+        fare: {
+          total: fareBreakdown.total,
+          subtotal: fareBreakdown.subtotal,
+          discount: fareBreakdown.discount,
+          planName: fareBreakdown.planName,
+        },
         date: selectedDate,
         time: selectedTime,
       };
@@ -204,7 +212,10 @@ export default function BookingBox() {
     <>
       <div className="bg-[#0f172a]/90 backdrop-blur-xl border border-green-500/20 p-6 rounded-3xl shadow-2xl w-full max-w-md text-white">
         <h2 className="text-3xl font-bold mb-1">Book Your Ride</h2>
-        <p className="text-gray-400 mb-6 text-sm">Fast • Safe • Reliable</p>
+        <p className="text-gray-400 mb-2 text-sm">Fast | Safe | Reliable</p>
+        <div className="mb-6 rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm font-bold text-green-300">
+          Active plan: {selectedPlan.name} {selectedPlan.discountRate ? `| ${Math.round(selectedPlan.discountRate * 100)}% ride discount` : '| standard pricing'}
+        </div>
 
         {/* PICKUP */}
         <div className="relative mb-4 z-50">

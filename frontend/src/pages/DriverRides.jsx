@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Car, IndianRupee, MapPin, Navigation, UserRound } from 'lucide-react';
 import api from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { formatCurrency } from '../utils/helpers';
 
-const DriverRides = () => {
+const money = (value = 0) => `Rs ${Number(value || 0).toLocaleString('en-IN')}`;
+
+const statusStyles = {
+  pending: 'bg-amber-500/10 text-amber-100 border-amber-400/30',
+  accepted: 'bg-sky-500/10 text-sky-100 border-sky-400/30',
+  'in-progress': 'bg-emerald-500/10 text-emerald-200 border-emerald-400/30',
+  completed: 'bg-slate-800 text-slate-200 border-slate-700',
+  cancelled: 'bg-rose-500/10 text-rose-200 border-rose-400/30',
+};
+
+export default function DriverRides() {
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +22,7 @@ const DriverRides = () => {
     const fetchRides = async () => {
       try {
         const res = await api.get('/bookings/driver/my');
-        setRides(res.data);
+        setRides(res.data || []);
       } catch (err) {
         console.error('Failed to fetch rides:', err);
       } finally {
@@ -24,96 +34,89 @@ const DriverRides = () => {
 
   if (loading) return <LoadingSpinner text="Loading your rides..." />;
 
-  const completedRides = rides.filter((r) => r.status === 'completed');
-  const totalEarnings = completedRides.reduce((sum, r) => sum + (r.fare?.total || 0), 0);
-
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    accepted: 'bg-blue-100 text-blue-700',
-    'in-progress': 'bg-green-100 text-green-700',
-    completed: 'bg-gray-100 text-gray-700',
-    cancelled: 'bg-red-100 text-red-700',
-  };
+  const completedRides = rides.filter((ride) => ride.status === 'completed');
+  const totalEarnings = completedRides.reduce((sum, ride) => sum + Number(ride.fare?.total || 0), 0);
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50">
-      <div className="max-w-4xl mx-auto p-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">📋 My Rides</h1>
+    <div className="space-y-6 text-white">
+      <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+        <p className="text-sm font-bold uppercase text-emerald-300">Ride history</p>
+        <h1 className="mt-1 text-3xl font-black">My Rides</h1>
+        <p className="mt-2 text-sm font-semibold text-slate-400">Completed, active, and cancelled rides in one dark console view.</p>
+      </section>
 
-        {/* Summary */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-2xl font-bold text-gray-900">{rides.length}</p>
-            <p className="text-xs text-gray-500">Total Rides</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-2xl font-bold text-green-600">{completedRides.length}</p>
-            <p className="text-xs text-gray-500">Completed</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-            <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalEarnings)}</p>
-            <p className="text-xs text-gray-500">Total Earnings</p>
-          </div>
+      <section className="grid gap-3 md:grid-cols-3">
+        <Stat label="Total rides" value={rides.length} />
+        <Stat label="Completed" value={completedRides.length} />
+        <Stat label="Total earnings" value={money(totalEarnings)} />
+      </section>
+
+      {rides.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-700 bg-slate-900 p-10 text-center">
+          <Car className="mx-auto text-emerald-300" size={38} />
+          <p className="mt-4 font-black">No rides yet</p>
+          <p className="mt-1 text-sm font-semibold text-slate-400">Go online to receive requests.</p>
         </div>
-
-        {rides.length === 0 ? (
-          <div className="text-center py-20">
-            <span className="text-5xl">🚗</span>
-            <p className="text-gray-500 mt-4">No rides yet. Go online to receive requests!</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {rides.map((ride, i) => (
-              <motion.div
-                key={ride._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-white rounded-2xl p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[ride.status]}`}>
-                        {ride.status}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(ride.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-gray-600">📍 {ride.pickup?.address}</p>
-                      <p className="text-gray-600">🏁 {ride.drop?.address}</p>
-                    </div>
+      ) : (
+        <div className="space-y-4">
+          {rides.map((ride, index) => (
+            <motion.div
+              key={ride._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.03 }}
+              className="rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-xl shadow-black/10"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${statusStyles[ride.status] || statusStyles.pending}`}>
+                      {ride.status}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">
+                      {new Date(ride.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900">{formatCurrency(ride.fare?.total)}</p>
-                    <p className="text-xs text-gray-500">{ride.distance} km</p>
-                  </div>
+                  <RouteLine icon={MapPin} label="Pickup" value={ride.pickup?.address} />
+                  <RouteLine icon={Navigation} label="Drop" value={ride.drop?.address} />
+                  {ride.userId && (
+                    <div className="mt-4 flex items-center gap-2 border-t border-slate-800 pt-3 text-sm font-semibold text-slate-300">
+                      <UserRound size={17} className="text-emerald-300" />
+                      {ride.userId.name} {ride.userId.phone ? `| ${ride.userId.phone}` : ''}
+                    </div>
+                  )}
                 </div>
+                <div className="shrink-0 rounded-lg bg-slate-950 p-4 text-right lg:w-44">
+                  <IndianRupee className="ml-auto text-emerald-300" size={18} />
+                  <p className="mt-2 text-2xl font-black text-emerald-300">{money(ride.fare?.total)}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{ride.distance || 0} km</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-                {ride.userId && (
-                  <div className="flex items-center gap-2 pt-3 border-t text-sm text-gray-500">
-                    <span>👤</span>
-                    <span>{ride.userId.name}</span>
-                    <span>• {ride.userId.phone}</span>
-                  </div>
-                )}
+function Stat({ label, value }) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-900 p-4 text-center">
+      <p className="text-3xl font-black text-white">{value}</p>
+      <p className="mt-1 text-xs font-bold uppercase text-slate-500">{label}</p>
+    </div>
+  );
+}
 
-                {ride.rating && (
-                  <div className="mt-2 text-sm text-yellow-600">
-                    Rating: {'⭐'.repeat(ride.rating)} {ride.feedback && `— "${ride.feedback}"`}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        )}
+function RouteLine({ icon: Icon, label, value }) {
+  return (
+    <div className="mt-2 flex gap-3">
+      <Icon className="mt-1 shrink-0 text-emerald-300" size={17} />
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+        <p className="truncate font-semibold text-slate-200">{value || 'Not available'}</p>
       </div>
     </div>
   );
-};
-
-export default DriverRides;
+}

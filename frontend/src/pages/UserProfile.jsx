@@ -1,374 +1,217 @@
-import { useState, useEffect } from "react";
-import {
-  Camera,
-  ShieldCheck,
-  Star,
-  Crown,
-  MapPin,
-  Phone,
-  Mail,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarCheck, Camera, Car, CheckCircle2, IndianRupee, Mail, MapPin, Phone, Save, ShieldCheck, UserRound } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
-import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
+const money = (value = 0) => `Rs ${Number(value || 0).toLocaleString('en-IN')}`;
 
 export default function UserProfile() {
   const { user, updateUser } = useAuth();
-
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    avatar: "",
-  });
-
+  const [form, setForm] = useState({ name: '', phone: '', avatar: '' });
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setForm({
-        name: user.name,
-        phone: user.phone,
-        avatar: user.avatar || "",
-      });
+      setForm({ name: user.name || '', phone: user.phone || '', avatar: user.avatar || '' });
     }
   }, [user]);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+    let active = true;
+    const loadBookings = async () => {
+      try {
+        const res = await api.get('/bookings/user/my');
+        if (active) setBookings(res.data || []);
+      } catch {
+        if (active) setBookings([]);
+      }
+    };
+    loadBookings();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats = useMemo(() => {
+    const completed = bookings.filter((booking) => booking.status === 'completed');
+    return {
+      total: bookings.length,
+      active: bookings.filter((booking) => ['pending', 'accepted', 'in-progress', 'fleet-accepted'].includes(booking.status)).length,
+      completed: completed.length,
+      spend: completed.reduce((sum, booking) => sum + Number(booking.fare?.total || 0), 0),
+    };
+  }, [bookings]);
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setLoading(true);
-
     try {
-      const res = await api.put("/users/me", form);
-
+      const res = await api.put('/users/me', form);
       updateUser(res.data);
-
       setSuccess(true);
-
-      setTimeout(() => {
-        setSuccess(false);
-      }, 2500);
+      setTimeout(() => setSuccess(false), 2500);
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white px-4 py-10">
-      <div className="max-w-7xl mx-auto">
-        {/* TOP HEADING */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-3 bg-[#00ff8815] border border-[#00ff8840] px-6 py-3 rounded-full text-[#00ff88] font-semibold mb-5">
-            <Crown size={20} />
-            Premium Member Profile
-          </div>
-
-          <h1 className="text-6xl font-black tracking-tight">
-            My <span className="text-[#00ff88]">Profile</span>
-          </h1>
-
-          <p className="text-gray-400 mt-5 text-lg">
-            Manage your DriveEase account with premium controls
-          </p>
-        </div>
-
-        {/* MAIN CARD */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* LEFT SIDE */}
-          <div className="lg:col-span-4">
-            <div className="bg-gradient-to-br from-[#071427] to-[#020817] border border-[#00ff8830] rounded-[32px] p-8 shadow-[0_0_60px_rgba(0,255,136,0.08)] sticky top-10">
-              {/* PROFILE IMAGE */}
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-[#00ff88] blur-3xl opacity-20 rounded-full"></div>
-
-                  <img
-                    src={form.avatar || "/default-avatar.png"}
-                    alt="profile"
-                    className="relative w-52 h-52 rounded-full border-4 border-[#00ff88] object-cover shadow-2xl"
-                    onError={(e) =>
-                      (e.target.src = "/default-avatar.png")
-                    }
-                  />
-
-                  <button className="absolute bottom-3 right-3 bg-[#00ff88] text-black p-4 rounded-full shadow-xl hover:scale-110 transition-all duration-300">
-                    <Camera size={22} />
-                  </button>
-                </div>
-
-                {/* NAME */}
-                <h2 className="text-4xl font-bold mt-8 text-center">
-                  {form.name || "DriveEase User"}
-                </h2>
-
-                {/* VERIFIED */}
-                <div className="mt-4 flex items-center gap-2 bg-[#00ff8815] border border-[#00ff8840] px-5 py-2 rounded-full">
-                  <ShieldCheck
-                    className="text-[#00ff88]"
-                    size={18}
-                  />
-
-                  <span className="text-[#00ff88] font-semibold">
-                    Verified Premium Member
-                  </span>
-                </div>
-
-                <p className="text-gray-400 mt-4">
-                  Member since April 2024
-                </p>
+    <div className="customer-dashboard min-h-screen bg-slate-950 px-4 py-8 text-white">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <section className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-emerald-400/30 bg-emerald-500 text-2xl font-black text-slate-950">
+                {form.avatar ? <img src={form.avatar} alt="profile" className="h-full w-full object-cover" /> : (form.name || 'DU').slice(0, 2).toUpperCase()}
               </div>
-
-              {/* STATS */}
-              <div className="mt-10 space-y-5">
-                <div className="bg-[#0b1727] border border-[#1e293b] rounded-2xl p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-[#7c3aed] p-3 rounded-xl">
-                      <Star size={18} />
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-400">
-                        User Rating
-                      </p>
-
-                      <h4 className="font-bold text-lg">
-                        4.9 / 5
-                      </h4>
-                    </div>
-                  </div>
-
-                  <span className="text-yellow-400 text-xl">
-                    ⭐
-                  </span>
+              <div>
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-extrabold uppercase text-emerald-300">
+                  <ShieldCheck size={14} />
+                  Customer dashboard
                 </div>
-
-                <div className="bg-[#0b1727] border border-[#1e293b] rounded-2xl p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-[#0284c7] p-3 rounded-xl">
-                      <MapPin size={18} />
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-400">
-                        Location
-                      </p>
-
-                      <h4 className="font-bold">
-                        Madhya Pradesh
-                      </h4>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-[#0b1727] border border-[#1e293b] rounded-2xl p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-[#16a34a] p-3 rounded-xl">
-                      <ShieldCheck size={18} />
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-400">
-                        Account Status
-                      </p>
-
-                      <h4 className="font-bold text-[#00ff88]">
-                        Fully Verified
-                      </h4>
-                    </div>
-                  </div>
-                </div>
+                <h1 className="text-3xl font-black md:text-4xl">Hi, {form.name || 'DriveEase User'}</h1>
+                <p className="mt-1 text-sm font-semibold text-slate-400">Your rides, account info, and next actions in one place.</p>
               </div>
-
-              {/* SUPPORT */}
-              <button className="mt-8 w-full bg-[#00ff88] text-black py-4 rounded-2xl font-bold hover:scale-[1.02] transition-all duration-300 shadow-lg">
-                Contact Premium Support
-              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/book" className="inline-flex h-11 items-center gap-2 rounded-lg bg-emerald-500 px-4 text-sm font-black text-slate-950">
+                <Car size={17} />
+                Book Ride
+              </Link>
+              <Link to="/my-rides" className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-700 px-4 text-sm font-black">
+                <CalendarCheck size={17} />
+                My Trips
+              </Link>
             </div>
           </div>
+        </section>
 
-          {/* RIGHT SIDE */}
-          <div className="lg:col-span-8">
-            <div className="bg-gradient-to-br from-[#071427] to-[#020817] border border-[#00ff8830] rounded-[32px] p-10 shadow-[0_0_60px_rgba(0,255,136,0.08)]">
-              {/* TITLE */}
-              <div className="flex items-center gap-5 mb-10">
-                <div className="bg-[#00ff8815] border border-[#00ff8840] p-5 rounded-2xl text-[#00ff88]">
-                  <Crown size={30} />
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat icon={CalendarCheck} label="Total trips" value={stats.total} />
+          <Stat icon={Car} label="Active requests" value={stats.active} />
+          <Stat icon={CheckCircle2} label="Completed" value={stats.completed} />
+          <Stat icon={IndianRupee} label="Completed spend" value={money(stats.spend)} />
+        </section>
+
+        <section className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+          <aside className="space-y-5">
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-500/10 text-emerald-300">
+                  <UserRound size={22} />
                 </div>
-
                 <div>
-                  <h2 className="text-4xl font-black">
-                    Personal Information
-                  </h2>
-
-                  <p className="text-gray-400 mt-2">
-                    Update and manage your premium account
-                    details
-                  </p>
+                  <h2 className="text-xl font-black">Account summary</h2>
+                  <p className="text-sm font-semibold text-slate-400">Verified customer account</p>
                 </div>
               </div>
+              <div className="mt-4 space-y-3">
+                <Info icon={Phone} label="Phone" value={form.phone || 'Not added'} />
+                <Info icon={Mail} label="Email" value={user?.email || 'Not added'} />
+                <Info icon={MapPin} label="Default city" value="India" />
+              </div>
+            </div>
 
-              {/* FORM */}
-              <form onSubmit={handleSubmit}>
-                {/* AVATAR URL */}
-                <div className="mb-7">
-                  <label className="block text-[#00ff88] mb-3 font-semibold">
-                    Avatar Image URL
-                  </label>
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+              <h2 className="text-xl font-black">Quick actions</h2>
+              <div className="mt-4 grid gap-2">
+                <Link to="/book" className="rounded-lg bg-emerald-500 px-4 py-3 text-center text-sm font-black text-slate-950">Schedule a ride</Link>
+                <Link to="/plans" className="rounded-lg border border-slate-700 px-4 py-3 text-center text-sm font-black">View plans</Link>
+                <Link to="/faqs" className="rounded-lg border border-slate-700 px-4 py-3 text-center text-sm font-black">Help & FAQs</Link>
+              </div>
+            </div>
+          </aside>
 
-                  <input
-                    type="url"
-                    name="avatar"
-                    value={form.avatar}
-                    onChange={handleChange}
-                    placeholder="https://example.com/avatar.jpg"
-                    className="w-full bg-[#0b1727] border border-[#1e293b] rounded-2xl px-6 py-5 text-white outline-none focus:border-[#00ff88] transition-all"
-                  />
+          <div className="space-y-5">
+            <form onSubmit={handleSubmit} className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="grid h-11 w-11 place-items-center rounded-lg bg-emerald-500/10 text-emerald-300">
+                  <Camera size={22} />
                 </div>
-
-                {/* GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-                  {/* NAME */}
-                  <div>
-                    <label className="block text-[#00ff88] mb-3 font-semibold">
-                      Full Name
-                    </label>
-
-                    <div className="relative">
-                      <UserInputIcon />
-
-                      <input
-                        name="name"
-                        value={form.name}
-                        onChange={handleChange}
-                        required
-                        className="w-full bg-[#0b1727] border border-[#1e293b] rounded-2xl pl-14 pr-6 py-5 text-white outline-none focus:border-[#00ff88]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* PHONE */}
-                  <div>
-                    <label className="block text-[#00ff88] mb-3 font-semibold">
-                      Phone Number
-                    </label>
-
-                    <div className="relative">
-                      <PhoneIcon />
-
-                      <input
-                        name="phone"
-                        value={form.phone}
-                        disabled
-                        className="w-full bg-[#0b1727] border border-[#1e293b] rounded-2xl pl-14 pr-6 py-5 text-gray-400 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* EMAIL */}
-                  <div>
-                    <label className="block text-[#00ff88] mb-3 font-semibold">
-                      Email Address
-                    </label>
-
-                    <div className="relative">
-                      <MailIcon />
-
-                      <input
-                        value={user?.email || "user@gmail.com"}
-                        disabled
-                        className="w-full bg-[#0b1727] border border-[#1e293b] rounded-2xl pl-14 pr-6 py-5 text-gray-400 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* LOCATION */}
-                  <div>
-                    <label className="block text-[#00ff88] mb-3 font-semibold">
-                      Location
-                    </label>
-
-                    <div className="relative">
-                      <LocationIcon />
-
-                      <input
-                        defaultValue="Bhopal, Madhya Pradesh"
-                        className="w-full bg-[#0b1727] border border-[#1e293b] rounded-2xl pl-14 pr-6 py-5 text-white outline-none focus:border-[#00ff88]"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <h2 className="text-2xl font-black">Personal information</h2>
+                  <p className="text-sm font-semibold text-slate-400">Update your visible account details.</p>
                 </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Avatar image URL" name="avatar" value={form.avatar} onChange={handleChange} placeholder="https://example.com/avatar.jpg" type="url" />
+                <Field label="Full name" name="name" value={form.name} onChange={handleChange} required />
+                <Field label="Phone number" name="phone" value={form.phone} disabled />
+                <Field label="Email address" value={user?.email || ''} disabled />
+              </div>
+              <button disabled={loading} className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 text-sm font-black text-slate-950 disabled:opacity-60">
+                <Save size={18} />
+                {loading ? 'Saving...' : 'Save Account'}
+              </button>
+              {success && <div className="mt-4 rounded-lg border border-emerald-400/40 bg-emerald-500/15 p-3 text-center text-sm font-bold text-emerald-200">Account updated successfully</div>}
+            </form>
 
-                {/* BUTTONS */}
-                <div className="flex flex-col md:flex-row gap-5 mt-12">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-[#00ff88] text-black py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all duration-300 shadow-lg disabled:opacity-50"
-                  >
-                    {loading
-                      ? "Saving Changes..."
-                      : "Save Premium Changes"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex-1 border border-[#1e293b] py-5 rounded-2xl font-bold hover:bg-[#0b1727] transition-all"
-                  >
-                    Reset Information
-                  </button>
-                </div>
-
-                {/* SUCCESS */}
-                {success && (
-                  <div className="mt-8 bg-[#00ff8815] border border-[#00ff8840] text-[#00ff88] text-center py-4 rounded-2xl font-bold">
-                    ✔ Profile Updated Successfully
+            <div className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-black">Recent trips</h2>
+                <Link to="/my-rides" className="text-sm font-black text-emerald-300">View all</Link>
+              </div>
+              <div className="space-y-3">
+                {bookings.slice(0, 4).map((booking) => (
+                  <div key={booking._id} className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold uppercase text-emerald-300">{booking.status}</span>
+                        <p className="mt-3 truncate font-bold">{booking.pickup?.address || 'Pickup'}</p>
+                        <p className="mt-1 truncate text-sm font-semibold text-slate-400">To {booking.drop?.address || 'Drop'}</p>
+                      </div>
+                      <p className="text-xl font-black text-emerald-300">{money(booking.fare?.total)}</p>
+                    </div>
                   </div>
-                )}
-              </form>
+                ))}
+                {bookings.length === 0 && <div className="rounded-lg border border-dashed border-slate-700 bg-slate-950 p-6 text-center text-sm font-semibold text-slate-400">No trips yet. Book your first ride.</div>}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
 }
 
-/* ICONS */
-
-function UserInputIcon() {
+function Stat({ icon: Icon, label, value }) {
   return (
-    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#00ff88]">
-      <Crown size={20} />
+    <div className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+          <p className="mt-3 text-3xl font-black">{value}</p>
+        </div>
+        <span className="rounded-lg border border-slate-700 bg-slate-950 p-2 text-emerald-300"><Icon size={20} /></span>
+      </div>
     </div>
   );
 }
 
-function PhoneIcon() {
+function Info({ icon: Icon, label, value }) {
   return (
-    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#00ff88]">
-      <Phone size={20} />
+    <div className="rounded-lg bg-slate-950 p-3">
+      <div className="mb-1 flex items-center gap-2 text-xs font-bold uppercase text-slate-500">
+        <Icon size={14} className="text-emerald-300" />
+        {label}
+      </div>
+      <p className="font-bold">{value}</p>
     </div>
   );
 }
 
-function MailIcon() {
+function Field({ label, ...props }) {
   return (
-    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#00ff88]">
-      <Mail size={20} />
-    </div>
-  );
-}
-
-function LocationIcon() {
-  return (
-    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#00ff88]">
-      <MapPin size={20} />
-    </div>
+    <label className="block">
+      <span className="mb-2 block text-sm font-bold text-emerald-300">{label}</span>
+      <input {...props} className="h-12 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 text-white outline-none placeholder:text-slate-600 focus:border-emerald-400 disabled:cursor-not-allowed disabled:text-slate-500" />
+    </label>
   );
 }

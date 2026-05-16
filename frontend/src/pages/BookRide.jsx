@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import MapView from '../components/MapView';
 import { getUserLocation, calculateDistance, formatCurrency } from '../utils/helpers';
+import { applyCustomerPlanToFare, getSelectedCustomerPlan } from '../utils/pricingPlans';
 
 const BASE_FARE = 50;
 const PER_KM_RATE = 12;
@@ -25,6 +26,7 @@ function BookRide() {
   const [route, setRoute] = useState([]);
   const [userLoc, setUserLoc] = useState(null);
   const [panelTab, setPanelTab] = useState('form');
+  const selectedPlan = getSelectedCustomerPlan();
 
   useEffect(() => {
     getUserLocation()
@@ -79,8 +81,17 @@ function BookRide() {
   const calculateFare = (dist, insurancePlan) => {
     const distanceCost = parseFloat((dist * PER_KM_RATE).toFixed(2));
     const insuranceAmt = insurancePlan === 'mini' ? 10 : insurancePlan === 'premium' ? 20 : 0;
-    const total = parseFloat((BASE_FARE + distanceCost + insuranceAmt).toFixed(2));
-    return { baseFare: BASE_FARE, distanceCost, insurance: insuranceAmt, total };
+    const subtotal = parseFloat((BASE_FARE + distanceCost + insuranceAmt).toFixed(2));
+    const planFare = applyCustomerPlanToFare(subtotal, selectedPlan);
+    return {
+      baseFare: BASE_FARE,
+      distanceCost,
+      insurance: insuranceAmt,
+      subtotal: planFare.subtotal,
+      discount: planFare.discount,
+      planName: planFare.planName,
+      total: planFare.total,
+    };
   };
 
   const handleSearch = async () => {
@@ -225,6 +236,9 @@ function BookRide() {
                     <span>Enter Trip Details</span> <span className="text-sm sm:text-lg">📝</span>
                   </h2>
                   <div className="space-y-5">
+                    <div className="rounded-xl border border-[#19e68c]/30 bg-[#19e68c]/10 px-4 py-3 text-sm font-bold text-[#19e68c]">
+                      Active plan: {selectedPlan.name} {selectedPlan.discountRate ? `| ${Math.round(selectedPlan.discountRate * 100)}% ride discount` : '| standard pricing'}
+                    </div>
                     <div>
                       <label className="block text-base font-semibold text-[#19e68c] mb-1">📍 Pickup Location</label>
                       <PlacesAutocomplete
@@ -308,6 +322,10 @@ function BookRide() {
                       <div className="flex justify-between">
                         <span className="text-gray-300">Insurance</span>
                         <span className="text-white">{formatCurrency(fare.insurance)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">{fare.planName} Plan Discount</span>
+                        <span className="text-[#19e68c]">- {formatCurrency(fare.discount)}</span>
                       </div>
                       <div className="border-t border-[#19e68c]/20 pt-2 flex justify-between font-bold text-white">
                         <span>Total</span>

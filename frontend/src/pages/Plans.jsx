@@ -1,164 +1,199 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BadgeCheck, Building2, Car, CheckCircle2, Crown, Gauge, IndianRupee, ShieldCheck, Truck, UserRound } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import {
+  CUSTOMER_PLANS,
+  DRIVER_PLANS,
+  FLEET_PLANS,
+  applyCustomerPlanToFare,
+  saveSelectedPlan,
+} from '../utils/pricingPlans';
 
-import React, { useState } from 'react';
-import api from '../utils/api';
-
-
-const PLANS = [
-  {
-    name: 'BASIC',
-    price: 0,
-    per: 'month',
-    highlight: false,
-    color: 'from-[#232c3a] to-[#232c3a]',
-    dot: 'bg-[#19e68c]',
-    subtitle: 'Best for normal users',
-    features: [
-      { label: 'Standard pricing per ride', type: 'yes' },
-      { label: 'Normal driver allocation', type: 'yes' },
-      { label: 'Limited offers', type: 'yes' },
-      { label: 'Priority booking', type: 'no' },
-      { label: 'Ride discounts', type: 'no' },
-    ],
-    details: [
-      { label: 'Booking Quote', value: '₹250', color: 'text-[#19e68c]' },
-      { label: 'Priority Badge', value: 'Standard', color: 'text-white' },
-      { label: 'Driver Quality', value: 'Normal drivers', color: 'text-[#19e68c]' },
-    ],
-    cta: 'Continue Free',
-    usecase: 'First-time users / casual riders',
-    ctaColor: 'bg-blue-500 hover:bg-blue-600',
-  },
-  {
-    name: 'SMART',
-    price: 99,
-    per: 'month',
-    highlight: true,
-    color: 'from-[#19e68c] to-[#128c7e]',
-    dot: 'bg-[#19e68c]',
-    subtitle: 'Most users ke liye perfect',
-    features: [
-      { label: 'Faster driver allocation', type: 'yes' },
-      { label: '5–10% discount per ride', type: 'yes' },
-      { label: 'Better rated drivers', type: 'yes' },
-      { label: 'Priority support', type: 'yes' },
-      { label: 'Weekly coupons', type: 'yes' },
-    ],
-    details: [
-      { label: 'Booking Quote', value: '₹230', color: 'text-[#19e68c]' },
-      { label: 'Priority Badge', value: 'Priority', color: 'text-[#19e68c]' },
-      { label: 'Driver Quality', value: '4++ drivers', color: 'text-[#19e68c]' },
-    ],
-    cta: 'Choose SMART',
-    usecase: 'Daily riders who want savings + faster pickups',
-    ctaColor: 'bg-[#19e68c] hover:bg-[#128c7e] text-black',
-    badge: 'MOST POPULAR',
-  },
-  {
-    name: 'PREMIUM / ELITE',
-    price: 299,
-    per: 'month',
-    highlight: false,
-    color: 'from-[#a6642f] to-[#e09e3e]',
-    dot: 'bg-[#e09e3e]',
-    subtitle: 'High-value customers ke liye',
-    features: [
-      { label: 'Instant driver matching (top priority)', type: 'yes' },
-      { label: '10–15% discount on rides', type: 'yes' },
-      { label: 'Top-rated drivers only', type: 'yes' },
-      { label: 'Premium live tracking + premium support', type: 'yes' },
-      { label: 'Free cancellation (limited)', type: 'yes' },
-      { label: 'Corporate use friendly', type: 'yes' },
-    ],
-    details: [
-      { label: 'Booking Quote', value: '₹210', color: 'text-[#e09e3e]' },
-      { label: 'Priority Badge', value: '🔥 Fastest Pickup', color: 'text-[#e09e3e]' },
-      { label: 'Driver Quality', value: '4.5++ verified drivers', color: 'text-[#e09e3e]' },
-    ],
-    cta: 'Choose PREMIUM',
-    usecase: 'Power users, business travel, corporate teams',
-    ctaColor: 'bg-[#e09e3e] hover:bg-[#a6642f] text-white',
-  },
+const roles = [
+  { id: 'customer', label: 'Customer', icon: UserRound },
+  { id: 'driver', label: 'Driver', icon: Car },
+  { id: 'fleet', label: 'Travel Partner', icon: Building2 },
 ];
 
+const roleCopy = {
+  customer: {
+    title: 'Customer Ride Plans',
+    subtitle: 'Plan select karte hi ride quote me discount and priority apply hoga.',
+  },
+  driver: {
+    title: 'Driver Growth Plans',
+    subtitle: 'Drivers ke liye request visibility, support, aur earning tools.',
+  },
+  fleet: {
+    title: 'Travel Partner Plans',
+    subtitle: 'Fleet owners ke liye lead priority, conversion, aur operations support.',
+  },
+};
+
 export default function Plans() {
-  const [form, setForm] = useState({ name: '', phone: '', city: '', requirement: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(null);
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setSubmitting(true);
-    setSuccess(null);
-    try {
-      await api.post('/subscriptions', form);
-      setSuccess('Subscription submitted!');
-      setForm({ name: '', phone: '', city: '', requirement: '' });
-    } catch {
-      setSuccess('Failed to submit. Try again.');
-    } finally {
-      setSubmitting(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const initialRole = user?.role === 'fleet' ? 'fleet' : user?.role === 'driver' ? 'driver' : 'customer';
+  const [activeRole, setActiveRole] = useState(initialRole);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  const activePlans = activeRole === 'driver' ? DRIVER_PLANS : activeRole === 'fleet' ? FLEET_PLANS : CUSTOMER_PLANS;
+  const exampleFare = useMemo(() => applyCustomerPlanToFare(250, selectedPlan || CUSTOMER_PLANS[0]), [selectedPlan]);
+
+  const selectPlan = (plan) => {
+    setSelectedPlan(plan);
+
+    if (activeRole === 'customer') {
+      saveSelectedPlan(plan);
+      navigate('/book');
+      return;
     }
+
+    if (activeRole === 'driver') {
+      navigate('/driver/dashboard');
+      return;
+    }
+
+    navigate('/fleet/dashboard');
   };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a1019] via-[#0f172a] to-[#1e293b] text-white p-0 max-w-full">
-      {/* Hero Section */}
-      <div className="w-full px-4 pt-10 pb-2 md:pt-16 md:pb-6 flex flex-col items-center justify-center bg-gradient-to-br from-[#0a1019] via-[#0f172a] to-[#1e293b]">
-        <h1 className="text-3xl md:text-5xl font-extrabold mb-3 text-center tracking-tight text-white drop-shadow-lg">Choose the right plan for you</h1>
-        <div className="text-lg md:text-xl text-[#a7f3d0] mb-8 text-center font-medium">Faster allocation, better drivers, and smarter pricing from BASIC to ELITE.</div>
-      </div>
-      {/* Plans Cards */}
-      <div className="flex flex-col md:flex-row gap-8 md:gap-6 justify-center items-stretch mb-14 max-w-7xl mx-auto px-2">
-        {PLANS.map((plan, idx) => (
-          <div
-            key={plan.name}
-            className={`relative flex-1 flex flex-col rounded-2xl shadow-xl border border-white/10 bg-gradient-to-br ${plan.color} p-8 min-w-[320px] max-w-[400px] mx-auto ${plan.highlight ? 'scale-105 z-10 shadow-2xl border-4 border-[#19e68c]/80' : ''}`}
-            style={{ boxShadow: plan.highlight ? '0 8px 32px 0 #19e68c55, 0 2px 8px 0 #fff2 inset' : '0 4px 16px 0 #232c3a44' }}
-          >
-            {/* Highlight badge */}
-            {plan.badge && (
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-[#19e68c] text-[#0a1019] text-xs font-bold px-4 py-1 rounded-full shadow-lg tracking-wide border-2 border-white/40">{plan.badge}</div>
-            )}
-            {/* Dot */}
-            <div className={`absolute top-6 left-6 w-3 h-3 rounded-full ${plan.dot} border-2 border-white/40`} />
-            <div className="mb-2 mt-2 text-xl font-extrabold tracking-wide">{plan.name}</div>
-            <div className="mb-2 text-sm text-[#a7f3d0] font-medium">{plan.subtitle}</div>
-            <div className="flex items-end gap-2 mb-4 mt-2">
-              <span className="text-4xl font-black text-white">₹{plan.price}</span>
-              <span className="text-base font-semibold text-[#a7f3d0]">/ {plan.per}</span>
-            </div>
-            {/* Details grid */}
-            <div className="rounded-xl bg-[#101624]/80 border border-white/10 p-4 mb-4">
-              {plan.details.map((d, i) => (
-                <div key={d.label} className="flex justify-between items-center text-sm mb-1">
-                  <span className="font-medium text-white/80">{d.label}</span>
-                  <span className={`font-bold ${d.color}`}>{d.value}</span>
-                </div>
-              ))}
-            </div>
-            {/* Features */}
-            <ul className="flex-1 mb-4 space-y-2">
-              {plan.features.map((f, i) => (
-                <li key={f.label} className="flex items-center gap-2 text-base font-medium">
-                  {f.type === 'yes' ? (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#19e68c] text-[#0a1019] font-bold text-lg">✓</span>
-                  ) : (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#e53e3e] text-white font-bold text-lg">✗</span>
-                  )}
-                  <span className={f.type === 'no' ? 'opacity-60 line-through' : ''}>{f.label}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="text-xs text-[#a7f3d0] mb-4 mt-2">Use case: <span className="font-semibold text-white/90">{plan.usecase}</span></div>
-            <button
-              className={`w-full py-3 rounded-xl font-extrabold text-lg mt-auto shadow-lg transition-all duration-200 ${plan.ctaColor}`}
-              onClick={() => alert(`Selected plan: ${plan.name}`)}
-            >
-              {plan.cta}
-            </button>
+    <div className="min-h-screen bg-[#111827] px-4 py-10 text-white">
+      <div className="mx-auto max-w-7xl">
+        <section className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm font-extrabold text-emerald-300">
+            <Crown size={18} />
+            DriveEase Pricing
           </div>
-        ))}
+          <h1 className="mt-5 text-4xl font-black md:text-6xl">Plans for every DriveEase user</h1>
+          <p className="mx-auto mt-4 max-w-3xl text-base font-semibold text-slate-300">
+            Customer, driver, aur travel partner ke liye alag pricing. Customer plan ride fare me directly apply hota hai.
+          </p>
+        </section>
+
+        <section className="mx-auto mt-8 grid max-w-3xl grid-cols-3 gap-2 rounded-lg border border-slate-700 bg-[#172233] p-2">
+          {roles.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveRole(id)}
+              className={`flex h-12 items-center justify-center gap-2 rounded-lg text-sm font-black transition ${
+                activeRole === id ? 'bg-emerald-500 text-slate-950' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              <Icon size={17} />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
+        </section>
+
+        <section className="mt-10">
+          <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-bold uppercase text-emerald-300">{roles.find((role) => role.id === activeRole)?.label}</p>
+              <h2 className="mt-1 text-3xl font-black">{roleCopy[activeRole].title}</h2>
+              <p className="mt-2 text-sm font-semibold text-slate-400">{roleCopy[activeRole].subtitle}</p>
+            </div>
+
+            {activeRole === 'customer' && (
+              <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm font-bold text-emerald-100">
+                Example quote: Rs {exampleFare.subtotal} - Rs {exampleFare.discount} = Rs {exampleFare.total}
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-3">
+            {activePlans.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} role={activeRole} onSelect={() => selectPlan(plan)} />
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function PlanCard({ plan, role, onSelect }) {
+  const customer = role === 'customer';
+  const example = customer ? applyCustomerPlanToFare(250, plan) : null;
+  const premium = plan.id.includes('premium') || plan.id.includes('elite') || plan.id.includes('pro');
+  const popular = plan.popular || plan.id === 'smart';
+
+  return (
+    <div className={`relative rounded-lg border p-6 shadow-2xl shadow-black/20 ${
+      popular
+        ? 'border-emerald-400 bg-gradient-to-br from-emerald-500 to-[#128c7e] text-slate-950'
+        : premium
+        ? 'border-amber-400/30 bg-gradient-to-br from-[#8b5a2b] to-[#d79535]'
+        : 'border-slate-700 bg-[#172233]'
+    }`}>
+      {popular && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border border-white/40 bg-emerald-300 px-4 py-1 text-xs font-black text-slate-950">
+          MOST POPULAR
+        </div>
+      )}
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-2xl font-black">{plan.name}</p>
+          <p className={`mt-2 text-sm font-bold ${popular ? 'text-slate-800' : 'text-emerald-200'}`}>{plan.subtitle || 'Best matched plan'}</p>
+        </div>
+        <span className={`grid h-10 w-10 place-items-center rounded-lg ${popular ? 'bg-slate-950/15' : 'bg-emerald-500/10 text-emerald-300'}`}>
+          {role === 'customer' ? <ShieldCheck size={22} /> : role === 'driver' ? <Gauge size={22} /> : <Truck size={22} />}
+        </span>
       </div>
 
+      <div className="mt-6 flex items-end gap-2">
+        <span className="text-5xl font-black">Rs {plan.price}</span>
+        <span className={`pb-2 text-sm font-black ${popular ? 'text-slate-800' : 'text-emerald-200'}`}>/ month</span>
+      </div>
+
+      {customer ? (
+        <div className={`mt-6 rounded-lg p-4 ${popular ? 'bg-slate-950/20' : 'bg-slate-950/70'}`}>
+          <Info label="Booking Quote" value={`Rs ${example.total}`} />
+          <Info label="Ride Discount" value={plan.discountRate ? `${Math.round(plan.discountRate * 100)}%` : 'No discount'} />
+          <Info label="Priority Badge" value={plan.priority} />
+          <Info label="Driver Quality" value={plan.driverQuality} />
+        </div>
+      ) : (
+        <div className={`mt-6 rounded-lg p-4 ${popular ? 'bg-slate-950/20' : 'bg-slate-950/70'}`}>
+          <Info label={role === 'driver' ? 'Earning Impact' : 'Profit Impact'} value={plan.earningNote || plan.profitNote} />
+          <Info label="Support" value={popular ? 'Priority' : 'Standard'} />
+        </div>
+      )}
+
+      <ul className="mt-6 space-y-3">
+        {(plan.benefits || [
+          plan.discountRate ? `${Math.round(plan.discountRate * 100)}% discount per ride` : 'Standard pricing per ride',
+          plan.priority,
+          plan.driverQuality,
+        ]).map((item) => (
+          <li key={item} className="flex items-start gap-3 text-sm font-bold">
+            <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+            {item}
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        onClick={onSelect}
+        className={`mt-8 h-12 w-full rounded-lg text-sm font-black shadow-lg transition ${
+          popular ? 'bg-slate-950 text-white hover:bg-slate-800' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
+        }`}
+      >
+        {customer ? `Choose ${plan.name}` : role === 'driver' ? 'Use Driver Plan' : 'Use Partner Plan'}
+      </button>
+    </div>
+  );
+}
+
+function Info({ label, value }) {
+  return (
+    <div className="flex justify-between gap-3 py-1 text-sm font-bold">
+      <span className="opacity-80">{label}</span>
+      <span className="text-right">{value}</span>
     </div>
   );
 }

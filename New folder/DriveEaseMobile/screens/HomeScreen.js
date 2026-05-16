@@ -1,138 +1,197 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { BlurView } from 'expo-blur';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import GlassCard from '../components/GlassCard';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import AppShell from '../components/AppShell';
+import PremiumMap from '../components/PremiumMap';
+import { colors, savedPlaces } from '../data/rideData';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }) {
   return (
-    <View style={{ flex: 1, backgroundColor: '#10151c', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: '#fff', fontSize: 24 }}>Test Home Screen</Text>
-    </View>
+    <AppShell>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Good evening</Text>
+            <Text style={styles.title}>Where are you going?</Text>
+          </View>
+          <TouchableOpacity style={styles.avatar} onPress={() => navigation.navigate('Profile')}>
+            <Text style={styles.avatarText}>H</Text>
+          </TouchableOpacity>
+        </View>
+
+        <PremiumMap />
+
+        <View style={styles.bookingCard}>
+          <TouchableOpacity style={styles.inputRow} onPress={() => navigation.navigate('Booking')}>
+            <View style={styles.greenDot} />
+            <View style={styles.inputTextWrap}>
+              <Text style={styles.inputLabel}>Pickup</Text>
+              <Text style={styles.inputText}>Current Location</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity style={styles.inputRow} onPress={() => navigation.navigate('Booking')}>
+            <View style={styles.blueDot} />
+            <View style={styles.inputTextWrap}>
+              <Text style={styles.inputLabel}>Drop location</Text>
+              <Text style={styles.inputText}>Search destination</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Booking')}>
+            <Text style={styles.primaryButtonText}>Continue Booking</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionTitle}>Saved places</Text>
+        <View style={styles.savedList}>
+          {savedPlaces.map((place) => (
+            <TouchableOpacity key={place.label} style={styles.savedCard} onPress={() => navigation.navigate('Booking')}>
+              <Text style={styles.savedIcon}>{place.label.slice(0, 1)}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.savedLabel}>{place.label}</Text>
+                <Text style={styles.savedAddress}>{place.address}</Text>
+              </View>
+              <Text style={styles.savedEta}>{place.eta}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </AppShell>
   );
 }
 
-
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#10151c',
+  content: {
+    padding: 18,
+    paddingBottom: 34,
   },
-  searchBarWrapper: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40,
-    left: 20,
-    right: 20,
-    borderRadius: 18,
-    overflow: 'hidden',
-    zIndex: 10,
-  },
-  searchBar: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(24,31,42,0.7)',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '500',
-    letterSpacing: 0.5,
-  },
-  bottomSheetWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  bottomSheet: {
-    width: '96%',
-    borderRadius: 28,
-    paddingVertical: 24,
-    paddingHorizontal: 18,
-    marginBottom: Platform.OS === 'ios' ? 32 : 18,
-    alignSelf: 'center',
-  },
-  rideTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    letterSpacing: 0.5,
-  },
-  rideOptionsRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 18,
   },
-  rideOption: {
-    alignItems: 'center',
-    padding: 8,
-    flex: 1,
+  greeting: {
+    color: colors.muted,
+    fontWeight: '700',
   },
-  rideOptionText: {
-    color: '#fff',
-    fontSize: 13,
+  title: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: '900',
     marginTop: 4,
-    fontWeight: '500',
   },
-  farePreview: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 18,
-    marginTop: 6,
-  },
-  fareLabel: {
-    color: '#aaa',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  fareValue: {
-    color: '#4cde80',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  bookButton: {
-    backgroundColor: '#4cde80',
-    borderRadius: 18,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 4,
-    shadowColor: '#4cde80',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  bookButtonText: {
-    color: '#10151c',
-    fontWeight: 'bold',
-    fontSize: 17,
-    letterSpacing: 0.5,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 120 : 100,
-    right: 28,
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    width: 56,
-    height: 56,
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.green,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 6,
-    zIndex: 20,
+  },
+  avatarText: {
+    color: '#041009',
+    fontWeight: '900',
+  },
+  bookingCard: {
+    marginTop: -40,
+    marginHorizontal: 8,
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: colors.panel,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+  },
+  greenDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.green,
+  },
+  blueDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.blue,
+  },
+  inputTextWrap: {
+    flex: 1,
+  },
+  inputLabel: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  inputText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginLeft: 24,
+  },
+  primaryButton: {
+    marginTop: 14,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: colors.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    color: '#041009',
+    fontWeight: '900',
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontWeight: '900',
+    fontSize: 20,
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  savedList: {
+    gap: 10,
+  },
+  savedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.bg2,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  savedIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(32,230,138,0.14)',
+    color: colors.green,
+    textAlign: 'center',
+    lineHeight: 34,
+    fontWeight: '900',
+  },
+  savedLabel: {
+    color: colors.text,
+    fontWeight: '900',
+  },
+  savedAddress: {
+    color: colors.muted,
+    marginTop: 2,
+  },
+  savedEta: {
+    color: colors.green,
+    fontWeight: '800',
+    fontSize: 12,
   },
 });

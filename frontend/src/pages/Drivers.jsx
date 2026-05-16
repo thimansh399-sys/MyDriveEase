@@ -103,7 +103,7 @@ const Drivers = () => {
         distance: distance || 10,
         duration: duration || 30,
         insurancePlan: insurance || 'none',
-        fare: fare?.total || undefined,
+        fare: fare || undefined,
       });
       setBookingSuccess({
         id: res.data._id || res.data.bookingId || 'BOOK123',

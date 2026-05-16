@@ -1,5 +1,6 @@
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
+import { Car, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
@@ -27,12 +28,14 @@ export default function DriverLayout() {
 
   const content = useMemo(() => {
     return (
-      <div className="flex min-h-screen bg-[#101924]">
+      <div className="flex min-h-[calc(100vh-76px)] bg-slate-950">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex md:flex-col w-72 fixed left-0 top-0 h-screen bg-[#0f172a] border-r border-green-400/20">
+        <aside className="hidden md:flex md:flex-col w-72 fixed left-0 top-[76px] h-[calc(100vh-76px)] bg-slate-900 border-r border-green-400/20">
           <div className="h-16 flex items-center px-6 border-b border-green-400/10">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🛺</span>
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500 text-slate-950">
+                <Car size={21} />
+              </span>
               <div>
                 <div className="text-white font-extrabold leading-none">DriveEase</div>
                 <div className="text-xs text-green-400 font-semibold">Driver Console</div>
@@ -55,7 +58,7 @@ export default function DriverLayout() {
                   title={item.label}
                 >
                   <span className="text-sm font-bold">{item.label}</span>
-                  <span className={`text-lg ${isActive ? 'text-green-300' : 'text-gray-400'}`}>›</span>
+                  <ChevronRight size={16} className={isActive ? 'text-green-300' : 'text-gray-400'} />
                 </Link>
               );
             })}
@@ -79,7 +82,9 @@ export default function DriverLayout() {
             <div className="absolute left-0 top-0 w-80 h-full bg-[#0f172a] border-r border-green-400/20 overflow-auto">
               <div className="h-16 flex items-center px-6 border-b border-green-400/10">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">🛺</span>
+                  <span className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500 text-slate-950">
+                    <Car size={21} />
+                  </span>
                   <div>
                     <div className="text-white font-extrabold leading-none">DriveEase</div>
                     <div className="text-xs text-green-400 font-semibold">Driver Console</div>
@@ -127,7 +132,7 @@ export default function DriverLayout() {
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Open menu"
             >
-              ☰
+              Menu
             </button>
             <div className="text-sm font-bold text-green-300">Driver</div>
             <button

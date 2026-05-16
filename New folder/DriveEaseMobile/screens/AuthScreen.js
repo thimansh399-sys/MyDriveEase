@@ -1,46 +1,96 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import AppShell from '../components/AppShell';
+import { colors } from '../data/rideData';
 
-export default function AuthScreen() {
-  const navigation = useNavigation();
+export default function AuthScreen({ navigation }) {
+  const [phone, setPhone] = useState('');
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login / Signup</Text>
-      {/* Add mobile number, OTP, Google login, guest option here */}
-      <View style={{marginTop: 32}}>
-        <Text style={{color: '#4ade80', fontWeight: 'bold', fontSize: 16, marginBottom: 8}}>Navigate to Screens (Dev/Test)</Text>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center'}}>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('Splash')}><Text style={styles.navBtnText}>Splash</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('Home')}><Text style={styles.navBtnText}>Home</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('RideSelection')}><Text style={styles.navBtnText}>Ride Selection</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('DriverMatching')}><Text style={styles.navBtnText}>Matching</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('DriverDetails')}><Text style={styles.navBtnText}>Driver Details</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('LiveTracking')}><Text style={styles.navBtnText}>Live Tracking</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('Payment')}><Text style={styles.navBtnText}>Payment</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('RideComplete')}><Text style={styles.navBtnText}>Ride Complete</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => navigation.navigate('Profile')}><Text style={styles.navBtnText}>Profile</Text></TouchableOpacity>
+    <AppShell>
+      <View style={styles.container}>
+        <Text style={styles.title}>Login to DriveEase</Text>
+        <Text style={styles.subtitle}>Enter your mobile number to continue with OTP.</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.label}>Mobile number</Text>
+          <TextInput
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            placeholder="+91 70075 15654"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+          />
+          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.replace('Home')}>
+            <Text style={styles.primaryButtonText}>Continue</Text>
+          </TouchableOpacity>
         </View>
+
+        <TouchableOpacity onPress={() => navigation.replace('Home')}>
+          <Text style={styles.guest}>Continue as guest</Text>
+        </TouchableOpacity>
       </View>
-    </View>
+    </AppShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#101924', alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#4ade80' },
-  navBtn: {
-    backgroundColor: '#222e3a',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    margin: 4,
-    borderWidth: 1,
-    borderColor: '#4ade80',
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 22,
   },
-  navBtnText: {
-    color: '#4ade80',
-    fontWeight: 'bold',
-    fontSize: 14,
+  title: {
+    color: colors.text,
+    fontWeight: '900',
+    fontSize: 30,
+  },
+  subtitle: {
+    color: colors.muted,
+    fontWeight: '700',
+    marginTop: 8,
+    lineHeight: 23,
+  },
+  card: {
+    marginTop: 24,
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: colors.panel,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  label: {
+    color: colors.muted,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  input: {
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: colors.bg2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 16,
+    color: colors.text,
+    fontWeight: '900',
+  },
+  primaryButton: {
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: colors.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+  },
+  primaryButtonText: {
+    color: '#041009',
+    fontWeight: '900',
+  },
+  guest: {
+    color: colors.green,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
