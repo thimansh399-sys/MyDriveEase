@@ -73,7 +73,18 @@ const ProtectedRoute = ({ children, role }) => {
 const GuestRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" />;
+  if (user) {
+    const homePath =
+      user.role === 'driver'
+        ? '/driver/dashboard'
+        : user.role === 'fleet'
+          ? '/fleet/dashboard'
+          : user.role === 'admin'
+            ? '/admin/dashboard'
+            : '/';
+
+    return <Navigate to={homePath} replace />;
+  }
   return children;
 };
 

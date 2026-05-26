@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { Server } = require('socket.io');
 
 const connectDB = require('./config/db');
+const ensureAdmin = require('./config/ensureAdmin');
 const { PORT } = require('./config');
 const setupSocket = require('./socket');
 
@@ -29,6 +30,7 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://127.0.0.1:5173',
   'https://mydriveease.in',
   'https://www.mydriveease.in',
 ];
@@ -224,7 +226,9 @@ app.use((err, req, res, next) => {
 // ==========================================
 
 connectDB()
-  .then(() => {
+  .then(async () => {
+
+    await ensureAdmin();
 
     server.listen(PORT, () => {
 
